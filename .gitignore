@@ -1,0 +1,41 @@
+# Binários Go
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+askwise
+/bin/
+
+# Testes
+*.test
+*.out
+coverage.html
+
+# Dependências
+/vendor/
+
+# Ambiente
+.env
+*.env.local
+
+# Dados locais
+/data/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker volumes
+qdrant_data/
