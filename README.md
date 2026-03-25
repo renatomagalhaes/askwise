@@ -19,6 +19,36 @@ O AskWise resolve isso: basta fazer upload dos documentos da empresa e qualquer 
 fazer perguntas no terminal, recebendo respostas instantâneas equivalentes às de um
 profissional com anos de experiência.
 
+## Como Funciona (TL;DR)
+
+```
+ Seus arquivos                 AskWise                        Você pergunta
+ ============          =======================              ================
+
+  manual.pdf    ──┐     1. Extrai o texto do arquivo
+  erros.txt     ──┼──►  2. Divide em pedaços pequenos
+  tickets.csv   ──┤     3. Transforma cada pedaço em vetor numérico (embedding)
+  config.yaml   ──┘     4. Salva os vetores no Qdrant (banco vetorial)
+                                    │
+                                    ▼
+                         Documentos indexados ✓
+                                    │
+  "Como resolver             ┌──────┘
+   o erro 5032?"  ──────►    │
+                             ├──  5. Transforma a pergunta em vetor
+                             ├──  6. Busca os pedaços mais parecidos no Qdrant
+                             ├──  7. Monta um prompt com o contexto encontrado
+                             └──  8. Envia para a LLM (GPT) gerar a resposta
+                                           │
+                                           ▼
+                              "O erro 5032 ocorre quando..."
+                              📎 Fontes: manual.pdf, erros.txt
+```
+
+**Resumo em uma frase:** você junta seus arquivos de conhecimento (PDF, TXT, CSV, YAML, JSON, MD),
+envia via API REST, e depois faz perguntas no terminal — o sistema busca os trechos mais
+relevantes e usa uma IA para gerar uma resposta precisa, sempre citando as fontes.
+
 ## Tech Stack
 
 | Componente       | Tecnologia                    | Motivo                                      |
