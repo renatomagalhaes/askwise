@@ -29,6 +29,14 @@ Antes de iniciar qualquer desenvolvimento, leia estes documentos na ordem:
 6. `docs/design/02-MODELO-DADOS.md` — Modelo de dados e structs
 7. `docs/design/03-API-DESIGN.md` — Endpoints e contratos
 
+## Documentos Essenciais
+
+Além dos docs de spec e design, consulte:
+
+- `PLAN.md` — Plano de implementação com etapas e tarefas
+- `docs/adr/` — Architecture Decision Records (decisões técnicas)
+- `api/openapi.yaml` — Especificação OpenAPI da API REST
+
 ## Estrutura do Código
 
 ```
@@ -37,6 +45,8 @@ cmd/
 └── chat/main.go          — CLI interativo (chat terminal)
 
 internal/
+├── config/               — Carregamento de configuração (.env)
+├── logger/               — Logger JSON estruturado (log/slog)
 ├── document/             — Parsing de arquivos (PDF, CSV, TXT, YAML, JSON, MD)
 ├── chunker/              — Divisão de texto em chunks
 ├── embedding/            — Geração de embeddings via OpenAI
@@ -50,7 +60,7 @@ internal/
 ## Convenções de Código
 
 ### Linguagem e Estilo
-- **Go 1.22+** com modules
+- **Go 1.26** com modules
 - Usar standard library sempre que possível
 - Interfaces para todos os componentes principais (testabilidade)
 - Erros com contexto: `fmt.Errorf("falha ao processar %s: %w", filename, err)`
@@ -68,10 +78,29 @@ internal/
 - Usar `.env.example` como template
 - Nunca hardcodar API keys ou secrets
 
+### Docker-First (ADR-001)
+- **Todo build, teste e execução acontecem dentro de containers Docker**
+- Nenhum comando exige Go instalado localmente
+- `Makefile` expõe todos os comandos via targets Docker Compose
+- Usar `make help` para ver comandos disponíveis
+- Usar `make dev-shell` para abrir um shell interativo dentro do container
+
+### Logs Estruturados JSON (ADR-002)
+- Usar `log/slog` da standard library (Go 1.21+) com `slog.JSONHandler`
+- Logs INFO/DEBUG vão para **STDOUT**, WARN/ERROR para **STDERR**
+- Sempre incluir campos contextuais: `component`, `doc_id`, `duration_ms`, etc.
+- Nunca logar dados sensíveis (API keys, conteúdo completo de documentos)
+
 ### Tratamento de Erros
-- Sempre propagar erros com contexto
+- Sempre propagar erros com contexto usando `fmt.Errorf("...: %w", err)`
 - Logs estruturados nas bordas (handlers HTTP, CLI)
 - Não usar panic para erros de negócio
+
+### Testes
+- Testes unitários com table-driven tests como padrão
+- Mocks via interfaces (sem framework externo de mock)
+- Testes de integração com build tag `//go:build integration`
+- `make test` para unitários, `make test-integration` para integração
 
 ## Referência de Regras de Negócio
 
@@ -106,13 +135,6 @@ Siga esta ordem para implementar os componentes:
 10. cmd/chat               — CLI terminal
 ```
 
-## Testes
-
-- Testes unitários para cada componente usando interfaces (mocks)
-- Testes de integração para o pipeline completo
-- Use `_test.go` no mesmo pacote
-- Table-driven tests quando aplicável
-
 ## Dependências Go Esperadas
 
 ```
@@ -123,3 +145,17 @@ go.mod:
   - github.com/joho/godotenv   (carregar .env)
   - github.com/ledongthuc/pdf  (parsing de PDF)
 ```
+
+## ADRs (Architecture Decision Records)
+
+Decisões técnicas relevantes são documentadas em `docs/adr/`:
+
+| ADR  | Decisão                                          |
+|------|--------------------------------------------------|
+| 001  | Docker-first: sem Go local                       |
+| 002  | Logs estruturados JSON via STDOUT/STDERR          |
+| 003  | SQLite para metadados                            |
+| 004  | Qdrant como vector store                         |
+| 005  | OpenAI como provider de IA                       |
+
+Ao tomar novas decisões técnicas, crie um novo ADR seguindo o formato existente.

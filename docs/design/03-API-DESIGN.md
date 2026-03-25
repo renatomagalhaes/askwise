@@ -5,7 +5,7 @@
 A API REST do AskWise é simples e focada em gerenciamento de documentos. Não existe
 endpoint de chat — o chat acontece exclusivamente via CLI no terminal.
 
-**Base URL**: `http://localhost:8080/api/v1`
+**Base URL**: `http://localhost:8484/api/v1`
 
 ## 2. Endpoints
 
@@ -54,7 +54,7 @@ Content-Type: multipart/form-data
 
 **Request:**
 ```bash
-curl -X POST http://localhost:8080/api/v1/documents \
+curl -X POST http://localhost:8484/api/v1/documents \
   -F "file=@manual-cloudapi-v3.pdf"
 ```
 
@@ -240,24 +240,24 @@ Request ──▶ Logger ──▶ Recovery ──▶ MaxFileSize ──▶ Hand
 
 ```bash
 # 1. Verificar se o servidor está saudável
-curl http://localhost:8080/api/v1/health | jq
+curl http://localhost:8484/api/v1/health | jq
 
 # 2. Upload de documentos
-curl -X POST http://localhost:8080/api/v1/documents \
+curl -X POST http://localhost:8484/api/v1/documents \
   -F "file=@docs/manual-cloudapi-v3.pdf" | jq
 
-curl -X POST http://localhost:8080/api/v1/documents \
+curl -X POST http://localhost:8484/api/v1/documents \
   -F "file=@docs/runbook-datasync.md" | jq
 
-curl -X POST http://localhost:8080/api/v1/documents \
+curl -X POST http://localhost:8484/api/v1/documents \
   -F "file=@docs/faq-erros-comuns.txt" | jq
 
 # 3. Listar documentos indexados
-curl http://localhost:8080/api/v1/documents | jq
+curl http://localhost:8484/api/v1/documents | jq
 
 # 4. Ver detalhes de um documento
-curl http://localhost:8080/api/v1/documents/a1b2c3d4-e5f6-7890-abcd-ef1234567890 | jq
+curl http://localhost:8484/api/v1/documents/a1b2c3d4-e5f6-7890-abcd-ef1234567890 | jq
 
 # 5. Remover um documento
-curl -X DELETE http://localhost:8080/api/v1/documents/a1b2c3d4-e5f6-7890-abcd-ef1234567890 | jq
+curl -X DELETE http://localhost:8484/api/v1/documents/a1b2c3d4-e5f6-7890-abcd-ef1234567890 | jq
 ```

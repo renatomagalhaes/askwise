@@ -76,7 +76,8 @@
 - Docker Compose para subir dependências (Qdrant)
 
 ### RNF-04: Observabilidade
-- Logs estruturados indicando cada etapa do pipeline
+- Logs estruturados em JSON via STDOUT/STDERR usando `log/slog` (ADR-002)
+- Cada log deve incluir `component`, `level`, `msg` e campos contextuais
 - Mostrar no terminal quantos chunks foram encontrados e de quais documentos
 - Em caso de erro, mensagens devem indicar a causa e possível solução
 
@@ -87,10 +88,11 @@
 - API key da OpenAI via variável de ambiente (nunca hardcoded)
 
 ### RNF-06: Portabilidade
-- Funcionar em macOS, Linux e Windows
-- Go 1.22+
-- Docker para dependências externas
+- Funcionar em macOS, Linux e Windows (via Docker)
+- Go 1.26 (dentro do container, sem instalação local)
+- Docker-first: todo build, teste e execução em containers (ADR-001)
 - Sem dependência de serviços cloud (exceto OpenAI API)
+- Makefile como interface única de comandos
 
 ## 3. Requisitos de Interface
 
@@ -147,9 +149,10 @@ GET    /api/v1/health             — Health check
 
 ## 5. Dependências Externas
 
-| Dependência              | Versão    | Propósito                              |
-|--------------------------|-----------|----------------------------------------|
-| Go                       | >= 1.22   | Linguagem principal                    |
-| Docker                   | >= 24.0   | Executar Qdrant                        |
-| Qdrant                   | >= 1.9    | Banco de dados vetorial                |
-| OpenAI API               | v1        | Embeddings + Chat Completion           |
+| Dependência              | Versão    | Propósito                              | Local?    |
+|--------------------------|-----------|----------------------------------------|-----------|
+| Docker                   | >= 24.0   | Containers (build, test, run)          | Sim       |
+| Make                     | qualquer  | Interface de comandos (Makefile)       | Sim       |
+| Go                       | 1.26      | Linguagem principal                    | Container |
+| Qdrant                   | >= 1.13   | Banco de dados vetorial                | Container |
+| OpenAI API               | v1        | Embeddings + Chat Completion           | Remoto    |

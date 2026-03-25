@@ -1,0 +1,318 @@
+openapi: 3.1.0
+info:
+  title: AskWise API
+  description: |
+    API REST para gerenciamento de documentos do AskWise — chatbot RAG para base de conhecimento.
+
+    O AskWise aceita upload de documentos em diversos formatos (PDF, CSV, TXT, YAML, JSON, MD),
+    processa e indexa o conteúdo usando embeddings vetoriais, e permite consulta via CLI de chat.
+
+    Esta API cobre apenas o gerenciamento de documentos. O chat acontece via CLI no terminal.
+  version: 1.0.0
+  contact:
+    name: AskWise
+    url: https://github.com/renatomagalhaes/askwise
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8484/api/v1
+    description: Servidor local de desenvolvimento
+
+tags:
+  - name: health
+    description: Status de saúde da aplicação e dependências
+  - name: documents
+    description: Upload, listagem e remoção de documentos da base de conhecimento
+
+paths:
+  /health:
+    get:
+      tags: [health]
+      summary: Health Check
+      description: Verifica se o servidor está rodando e se as dependências (Qdrant, SQLite) estão acessíveis.
+      operationId: healthCheck
+      responses:
+        "200":
+          description: Serviço saudável
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+              example:
+                status: healthy
+                version: 1.0.0
+                dependencies:
+                  qdrant: connected
+                  sqlite: connected
+                  openai: configured
+        "503":
+          description: Serviço com dependência indisponível
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+              example:
+                status: unhealthy
+                version: 1.0.0
+                dependencies:
+                  qdrant: disconnected
+                  sqlite: connected
+                  openai: configured
+
+  /documents:
+    post:
+      tags: [documents]
+      summary: Upload de Documento
+      description: |
+        Recebe um arquivo e inicia o pipeline de ingestão RAG:
+        1. Valida formato e tamanho (RN-01, RN-02)
+        2. Extrai texto do arquivo (RF-02)
+        3. Divide em chunks (RF-03, RN-06 a RN-09)
+        4. Gera embeddings vetoriais (RF-04)
+        5. Armazena no Qdrant (RF-05)
+
+        Se um arquivo com mesmo nome já existir, ele é substituído (RN-04, RN-22).
+      operationId: uploadDocument
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Arquivo para upload (máx 10MB)
+      responses:
+        "201":
+          description: Documento processado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentUploadResponse"
+        "400":
+          description: Formato de arquivo não suportado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error: unsupported_format
+                message: "Formato '.docx' não suportado. Formatos aceitos: pdf, csv, txt, yaml, json, md"
+                supported_formats: [pdf, csv, txt, yaml, yml, json, md]
+        "413":
+          description: Arquivo excede o limite de tamanho
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error: file_too_large
+                message: "Arquivo excede o limite de 10MB. Tamanho recebido: 15.3MB"
+        "422":
+          description: Arquivo vazio ou sem conteúdo extraível
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error: empty_content
+                message: "Não foi possível extrair texto do arquivo. Verifique se o arquivo não está vazio ou corrompido."
+        "500":
+          description: Erro interno no processamento
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    get:
+      tags: [documents]
+      summary: Listar Documentos
+      description: Retorna todos os documentos indexados na base de conhecimento.
+      operationId: listDocuments
+      responses:
+        "200":
+          description: Lista de documentos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentListResponse"
+
+  /documents/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: UUID do documento
+        schema:
+          type: string
+          format: uuid
+          example: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+
+    get:
+      tags: [documents]
+      summary: Detalhes de um Documento
+      description: Retorna informações detalhadas de um documento específico.
+      operationId: getDocument
+      responses:
+        "200":
+          description: Detalhes do documento
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Document"
+        "404":
+          description: Documento não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error: not_found
+                message: "Documento com ID 'xyz' não encontrado"
+
+    delete:
+      tags: [documents]
+      summary: Remover Documento
+      description: |
+        Remove um documento e todos os seus chunks/embeddings associados (RN-21).
+        A remoção é feita tanto no SQLite (metadados) quanto no Qdrant (vetores).
+      operationId: deleteDocument
+      responses:
+        "200":
+          description: Documento removido com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteResponse"
+        "404":
+          description: Documento não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      required: [status, version, dependencies]
+      properties:
+        status:
+          type: string
+          enum: [healthy, unhealthy]
+        version:
+          type: string
+          example: 1.0.0
+        dependencies:
+          type: object
+          properties:
+            qdrant:
+              type: string
+              enum: [connected, disconnected]
+            sqlite:
+              type: string
+              enum: [connected, disconnected]
+            openai:
+              type: string
+              enum: [configured, not_configured]
+
+    Document:
+      type: object
+      required: [id, name, file_type, file_size, chunk_count, status, created_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+        name:
+          type: string
+          description: Nome sanitizado do arquivo
+          example: manual-cloudapi-v3.pdf
+        original_name:
+          type: string
+          description: Nome original do arquivo como enviado
+          example: "Manual - CloudAPI (v3.0).pdf"
+        file_type:
+          type: string
+          enum: [pdf, csv, txt, yaml, json, md]
+          example: pdf
+        file_size:
+          type: integer
+          description: Tamanho em bytes
+          example: 245760
+        chunk_count:
+          type: integer
+          description: Número de chunks gerados
+          example: 42
+        status:
+          type: string
+          enum: [processing, ready, error]
+          example: ready
+        error_message:
+          type: string
+          description: Mensagem de erro (apenas quando status=error)
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-01-15T10:30:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2025-01-15T10:30:05Z"
+
+    DocumentUploadResponse:
+      allOf:
+        - $ref: "#/components/schemas/Document"
+        - type: object
+          properties:
+            message:
+              type: string
+              example: "Documento processado com sucesso. 42 chunks indexados."
+
+    DocumentListResponse:
+      type: object
+      required: [documents, total, total_chunks]
+      properties:
+        documents:
+          type: array
+          items:
+            $ref: "#/components/schemas/Document"
+        total:
+          type: integer
+          description: Total de documentos
+          example: 6
+        total_chunks:
+          type: integer
+          description: Total de chunks em todos os documentos
+          example: 342
+
+    DeleteResponse:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+          example: "Documento 'manual-cloudapi-v3.pdf' removido com sucesso. 42 chunks deletados."
+
+    ErrorResponse:
+      type: object
+      required: [error, message]
+      properties:
+        error:
+          type: string
+          description: Código de erro máquina-legível
+          example: unsupported_format
+        message:
+          type: string
+          description: Mensagem legível explicando o erro e possível solução
+          example: "Formato '.docx' não suportado. Formatos aceitos: pdf, csv, txt, yaml, json, md"
+        supported_formats:
+          type: array
+          items:
+            type: string
+          description: Presente apenas em erros de formato

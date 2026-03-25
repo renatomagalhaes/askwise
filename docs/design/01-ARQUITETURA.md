@@ -76,7 +76,7 @@ Responsável por expor endpoints REST para gerenciamento de documentos.
 
 - **Framework**: `net/http` (standard library)
 - **Router**: Implementação simples com `http.ServeMux`
-- **Porta padrão**: 8080
+- **Porta padrão**: 8484
 - **Responsabilidades**:
   - Receber upload de arquivos (multipart/form-data)
   - Validar formato e tamanho
@@ -260,7 +260,40 @@ Pergunta → Embedder → Vector → VectorStore.Search → []Chunks → LLM.Gen
 - **Flexibilidade**: Trocar OpenAI por outro provider sem mudar o código
 - **Didático**: Mostra boas práticas de design em Go
 
-## 5. Configuração
+## 5. Observabilidade — Logs Estruturados JSON (ADR-002)
+
+Todos os logs são emitidos em formato JSON estruturado via `log/slog` (standard library).
+
+### Destino
+
+| Nível        | Destino | Descrição                                        |
+|--------------|---------|--------------------------------------------------|
+| DEBUG, INFO  | STDOUT  | Eventos normais do sistema                       |
+| WARN, ERROR  | STDERR  | Situações anômalas ou falhas                     |
+
+### Formato
+
+```json
+{"time":"2025-01-15T10:30:00Z","level":"INFO","msg":"document uploaded","component":"server","doc_id":"abc","chunks":42,"duration_ms":1523}
+{"time":"2025-01-15T10:30:05Z","level":"ERROR","msg":"failed to parse","component":"document","file":"doc.pdf","error":"invalid format"}
+```
+
+### Campos Padrão
+
+Todos os logs devem incluir pelo menos `component` para identificar a origem:
+
+- `component`: server, chat, rag, storage, vectorstore, embedding, llm
+- Campos contextuais variam: `doc_id`, `file_name`, `chunks`, `duration_ms`, `error`
+
+### Implementação
+
+```go
+// internal/logger/ usa slog.JSONHandler direcionado para os.Stdout
+logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
+logger.Info("document uploaded", "component", "server", "doc_id", docID, "chunks", 42)
+```
+
+## 6. Configuração
 
 Toda configuração via variáveis de ambiente (arquivo `.env`):
 
@@ -276,7 +309,7 @@ QDRANT_PORT=6333
 QDRANT_COLLECTION=askwise
 
 # Server
-SERVER_PORT=8080
+SERVER_PORT=8484
 MAX_FILE_SIZE=10485760  # 10MB
 
 # RAG
@@ -289,18 +322,78 @@ RAG_SCORE_THRESHOLD=0.5
 SQLITE_PATH=./data/askwise.db
 ```
 
-## 6. Infraestrutura (Docker Compose)
+## 7. Infraestrutura — Docker-First (ADR-001)
 
-```yaml
-services:
-  qdrant:
-    image: qdrant/qdrant:latest
-    ports:
-      - "6333:6333"   # REST API
-      - "6334:6334"   # gRPC
-    volumes:
-      - qdrant_data:/qdrant/storage
+Todo o build, teste e execução acontecem dentro de containers Docker.
+Nenhuma instalação local de Go é necessária.
 
-volumes:
-  qdrant_data:
+### Dockerfile Multi-Stage
+
 ```
+┌──────────────────────────────────────────────┐
+│  Stage: builder                               │
+│  golang:1.26.1-alpine                          │
+│  Compila: askwise-server + askwise-chat       │
+└──────────────────────┬───────────────────────┘
+                       │
+┌──────────────────────▼───────────────────────┐
+│  Stage: runtime                               │
+│  alpine:3.20 (imagem mínima)                  │
+│  Apenas binários compilados                   │
+│  Usuário não-root                             │
+└──────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────┐
+│  Stage: dev                                   │
+│  golang:1.26.1-alpine + make + curl + jq       │
+│  Volume mount do código fonte                 │
+│  Para desenvolvimento com hot reload          │
+└──────────────────────────────────────────────┘
+```
+
+### Docker Compose
+
+```
+┌────────────────┐  ┌────────────────┐  ┌────────────────┐
+│    app          │  │    chat         │  │    qdrant       │
+│  (API HTTP)     │  │  (CLI Terminal) │  │  (Vector Store) │
+│  :8484          │  │  stdin/tty      │  │  :6333/:6334    │
+│                 │  │                 │  │                 │
+│  stage: dev     │  │  stage: dev     │  │  qdrant:v1.13   │
+│  volume: .:/app │  │  volume: .:/app │  │  volume: data   │
+└────────┬────────┘  └────────┬────────┘  └────────────────┘
+         │                    │                    ▲
+         └────────────────────┴────────────────────┘
+                    depends_on: qdrant
+```
+
+### Makefile
+
+Todos os comandos disponíveis via `make help`:
+
+| Comando              | Descrição                                    |
+|----------------------|----------------------------------------------|
+| `make up`            | Sobe toda a infra (qdrant + app)             |
+| `make down`          | Derruba todos os containers                  |
+| `make build`         | Builda as imagens Docker                     |
+| `make test`          | Roda testes unitários (dentro do container)  |
+| `make test-integration` | Roda testes de integração                 |
+| `make chat`          | Abre o chat interativo                       |
+| `make logs`          | Mostra logs JSON de todos os serviços        |
+| `make health`        | Health check da API                          |
+| `make upload FILE=x` | Upload de documento                         |
+| `make dev-shell`     | Shell dentro do container de desenvolvimento |
+| `make clean`         | Remove containers, volumes e dados           |
+
+## 8. Especificação da API — OpenAPI
+
+A API REST está especificada em `api/openapi.yaml` seguindo OpenAPI 3.1.0.
+O arquivo pode ser visualizado em ferramentas como Swagger UI, Redoc ou qualquer
+editor com suporte a OpenAPI.
+
+Endpoints documentados:
+- `GET  /api/v1/health` — Health check
+- `POST /api/v1/documents` — Upload de documento
+- `GET  /api/v1/documents` — Listar documentos
+- `GET  /api/v1/documents/:id` — Detalhes de um documento
+- `DELETE /api/v1/documents/:id` — Remover documento

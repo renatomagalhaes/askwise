@@ -23,13 +23,14 @@ profissional com anos de experiência.
 
 | Componente       | Tecnologia                    | Motivo                                      |
 |------------------|-------------------------------|---------------------------------------------|
-| Linguagem        | Go (Golang)                   | Performance, simplicidade, ótimo para CLI    |
+| Linguagem        | Go (Golang) 1.26              | Performance, simplicidade, ótimo para CLI    |
 | API HTTP         | `net/http` (stdlib)           | Sem dependências externas desnecessárias      |
 | Vector Store     | Qdrant                        | DB vetorial robusto, API REST, client Go     |
 | Metadata Store   | SQLite                        | Zero config, perfeito para PoC               |
 | Embeddings       | OpenAI `text-embedding-3-small` | Qualidade alta, custo baixo                |
 | LLM              | OpenAI `gpt-4o-mini`          | Rápido, barato, ótimo para PoC              |
-| Infra            | Docker Compose                | Sobe Qdrant com um comando                  |
+| Logs             | `log/slog` JSON               | Estruturado, stdlib, STDOUT/STDERR          |
+| Infra            | Docker Compose                | Tudo roda em containers, zero Go local       |
 
 ## Estrutura do Projeto
 
@@ -37,16 +38,28 @@ profissional com anos de experiência.
 askwise/
 ├── README.md                    # Este arquivo
 ├── AGENTS.md                    # Instruções para agentes de IA
+├── PLAN.md                      # Plano de implementação com etapas
+├── Dockerfile                   # Multi-stage: builder, runtime, dev
+├── docker-compose.yml           # app + chat + qdrant
+├── Makefile                     # Todos os comandos (make help)
+├── api/
+│   └── openapi.yaml             # Especificação OpenAPI/Swagger
 ├── docs/
 │   ├── spec/                    # SPEC: Especificações do projeto
 │   │   ├── 01-VISAO-GERAL.md
 │   │   ├── 02-CENARIO-NEGOCIO.md
 │   │   ├── 03-REQUISITOS.md
 │   │   └── 04-REGRAS-NEGOCIO.md
-│   ├── design/                  # DESIGN: Decisões de arquitetura
+│   ├── design/                  # Decisões de arquitetura
 │   │   ├── 01-ARQUITETURA.md
 │   │   ├── 02-MODELO-DADOS.md
 │   │   └── 03-API-DESIGN.md
+│   ├── adr/                     # Architecture Decision Records
+│   │   ├── 001-docker-first.md
+│   │   ├── 002-structured-json-logs.md
+│   │   ├── 003-sqlite-metadata.md
+│   │   ├── 004-qdrant-vectorstore.md
+│   │   └── 005-openai-provider.md
 │   └── learn/                   # Material educativo sobre RAG e SDD
 │       ├── 01-RAG-EXPLAINED.md
 │       ├── 02-SDD-METHODOLOGY.md
@@ -57,6 +70,8 @@ askwise/
 │   └── chat/                    # CLI interativo para perguntas
 │       └── main.go
 ├── internal/
+│   ├── config/                  # Carregamento de configuração (.env)
+│   ├── logger/                  # Logger JSON estruturado (slog)
 │   ├── document/                # Parsing e processamento de documentos
 │   ├── chunker/                 # Divisão de texto em chunks
 │   ├── embedding/               # Geração de embeddings via OpenAI
@@ -65,10 +80,8 @@ askwise/
 │   ├── llm/                     # Integração com LLM (chat completion)
 │   ├── rag/                     # Orquestração do pipeline RAG
 │   └── storage/                 # SQLite para metadados
-├── docker-compose.yml           # Qdrant + dependências
 ├── go.mod
 ├── go.sum
-├── Makefile                     # Comandos úteis
 └── .env.example                 # Variáveis de ambiente
 ```
 
@@ -86,29 +99,52 @@ quando combinada com agentes de IA que leem a spec e geram código alinhado auto
 
 Leia mais em [`docs/learn/02-SDD-METHODOLOGY.md`](docs/learn/02-SDD-METHODOLOGY.md).
 
+## Pré-requisitos
+
+Apenas dois programas são necessários. **Não é preciso instalar Go localmente** — tudo
+roda dentro de containers Docker ([ADR-001](docs/adr/001-docker-first.md)).
+
+- [Docker](https://docs.docker.com/get-docker/) >= 24.0
+- [Make](https://www.gnu.org/software/make/) (já incluso no macOS e na maioria dos Linux)
+
 ## Quick Start
 
 ```bash
 # 1. Clone o repositório
-git clone https://github.com/seu-usuario/askwise.git
+git clone https://github.com/renatomagalhaes/askwise.git
 cd askwise
 
 # 2. Configure as variáveis de ambiente
 cp .env.example .env
 # Edite .env com sua OPENAI_API_KEY
 
-# 3. Suba o Qdrant
-docker compose up -d
+# 3. Suba toda a infra (compila + qdrant + app)
+make up
 
-# 4. Inicie o servidor de upload
-go run cmd/server/main.go
+# 4. Verifique se está tudo saudável
+make health
 
-# 5. Faça upload de um documento (em outro terminal)
-curl -X POST http://localhost:8080/api/v1/documents \
-  -F "file=@meu-documento.pdf"
+# 5. Faça upload de um documento
+make upload FILE=meu-documento.pdf
 
-# 6. Inicie o chat
-go run cmd/chat/main.go
+# 6. Abra o chat interativo
+make chat
+```
+
+### Comandos Disponíveis
+
+```bash
+make help              # Lista todos os comandos
+make up                # Sobe tudo (qdrant + app)
+make down              # Derruba tudo
+make chat              # Abre o chat interativo
+make test              # Roda testes unitários
+make test-integration  # Roda testes de integração
+make logs              # Mostra logs JSON (follow)
+make upload FILE=x.pdf # Upload de documento
+make health            # Health check da API
+make dev-shell         # Shell dentro do container
+make clean             # Remove tudo (containers + volumes + dados)
 ```
 
 ## Formatos Suportados

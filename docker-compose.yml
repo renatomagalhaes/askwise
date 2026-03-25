@@ -1,0 +1,86 @@
+# ============================================================================
+# AskWise — Docker Compose
+# ============================================================================
+# ADR-001: Docker-first — todos os serviços rodam em containers.
+#
+# Services:
+#   qdrant  — Banco de dados vetorial (embeddings)
+#   app     — API HTTP para upload de documentos (modo dev com volume mount)
+#   chat    — CLI interativo para perguntas (modo dev com volume mount)
+# ============================================================================
+
+services:
+  # --------------------------------------------------------------------------
+  # Qdrant — Vector Store
+  # ADR-004: Qdrant como vector store para busca por similaridade
+  # --------------------------------------------------------------------------
+  qdrant:
+    image: qdrant/qdrant:v1.13.2
+    ports:
+      - "6333:6333"   # REST API
+      - "6334:6334"   # gRPC
+    volumes:
+      - qdrant_data:/qdrant/storage
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:6333/healthz"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
+  # App — API HTTP (modo desenvolvimento)
+  # Usa stage 'dev' do Dockerfile com volume mount para hot reload
+  # --------------------------------------------------------------------------
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: dev
+    ports:
+      - "8484:8484"
+    volumes:
+      - .:/app                     # Mount do código fonte para desenvolvimento
+      - go_mod_cache:/go/pkg/mod   # Cache de dependências Go
+      - go_build_cache:/root/.cache/go-build
+    env_file:
+      - .env
+    environment:
+      - QDRANT_HOST=qdrant
+      - SQLITE_PATH=/app/data/askwise.db
+    depends_on:
+      qdrant:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
+  # Chat — CLI interativo (execução sob demanda)
+  # Roda com `docker compose run --rm chat`
+  # --------------------------------------------------------------------------
+  chat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: dev
+    volumes:
+      - .:/app
+      - go_mod_cache:/go/pkg/mod
+      - go_build_cache:/root/.cache/go-build
+    env_file:
+      - .env
+    environment:
+      - QDRANT_HOST=qdrant
+      - SQLITE_PATH=/app/data/askwise.db
+    depends_on:
+      qdrant:
+        condition: service_healthy
+    stdin_open: true     # Necessário para input interativo
+    tty: true            # Necessário para input interativo
+    command: ["go", "run", "./cmd/chat"]
+    profiles:
+      - chat             # Só sobe quando explicitamente chamado
+
+volumes:
+  qdrant_data:
+  go_mod_cache:
+  go_build_cache:
