@@ -18,7 +18,7 @@ CLI Chat ◀── API Server ◀── RAG Pipeline ◀────────
 | 0     | Foundation        | Projeto compila e roda via Docker              | `done`      |
 | 1     | Data Layer        | SQLite + Qdrant funcionais com testes          | `done`      |
 | 2     | Doc Processing    | Upload → Parse → Chunk funcional com testes    | `done`      |
-| 3     | AI Integration    | Embeddings + LLM via OpenAI com testes         | `pending`   |
+| 3     | AI Integration    | Embeddings + LLM via OpenAI com testes         | `done`      |
 | 4     | RAG Pipeline      | Pipeline completo: ingest + query              | `pending`   |
 | 5     | API Server        | API REST funcional com todos os endpoints      | `pending`   |
 | 6     | CLI Chat          | Chat no terminal, end-to-end funcional         | `pending`   |
@@ -130,7 +130,7 @@ chunks corretamente. Sem dependência de OpenAI ou Qdrant nesta etapa.
 
 ---
 
-## Etapa 3: AI Integration
+## Etapa 3: AI Integration ✅ `done`
 
 **Objetivo**: Integração com OpenAI para gerar embeddings e chat completion.
 Ambos com interfaces para permitir mock nos testes.
@@ -139,15 +139,15 @@ Ambos com interfaces para permitir mock nos testes.
 
 ### Tarefas
 
-- [ ] **3.1** — `internal/embedding/` — Interface Embedder + implementação OpenAI
+- [x] **3.1** — `internal/embedding/` — Interface Embedder + implementação OpenAI
   - Embed(texts) e EmbedQuery(query)
   - Batch de até 100 textos por chamada
-- [ ] **3.2** — `internal/embedding/` — Testes unitários (com mock HTTP)
-- [ ] **3.3** — `internal/llm/` — Interface LLM + implementação OpenAI
+- [x] **3.2** — `internal/embedding/` — Testes unitários (com mock HTTP)
+- [x] **3.3** — `internal/llm/` — Interface LLM + implementação OpenAI
   - ChatCompletion(messages) retorna string
   - System prompt configurável
-- [ ] **3.4** — `internal/llm/` — Testes unitários (com mock HTTP)
-- [ ] **3.5** — ADR-005: OpenAI como provider de IA (decisão e alternativas)
+- [x] **3.4** — `internal/llm/` — Testes unitários (com mock HTTP)
+- [x] **3.5** — ADR-005: OpenAI como provider de IA (decisão e alternativas)
 
 ### Critério de Aceite
 
