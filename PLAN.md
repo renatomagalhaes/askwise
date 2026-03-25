@@ -17,7 +17,7 @@ CLI Chat ◀── API Server ◀── RAG Pipeline ◀────────
 |-------|-------------------|-----------------------------------------------|-------------|
 | 0     | Foundation        | Projeto compila e roda via Docker              | `done`      |
 | 1     | Data Layer        | SQLite + Qdrant funcionais com testes          | `done`      |
-| 2     | Doc Processing    | Upload → Parse → Chunk funcional com testes    | `pending`   |
+| 2     | Doc Processing    | Upload → Parse → Chunk funcional com testes    | `done`      |
 | 3     | AI Integration    | Embeddings + LLM via OpenAI com testes         | `pending`   |
 | 4     | RAG Pipeline      | Pipeline completo: ingest + query              | `pending`   |
 | 5     | API Server        | API REST funcional com todos os endpoints      | `pending`   |
@@ -97,7 +97,7 @@ no SQLite e fazer upsert/search/delete de vetores no Qdrant.
 
 ---
 
-## Etapa 2: Document Processing
+## Etapa 2: Document Processing ✅ `done`
 
 **Objetivo**: Receber um arquivo, extrair texto e dividir em chunks com metadados.
 Cada formato suportado tem seu parser. Chunker implementa recursive splitting.
@@ -106,15 +106,15 @@ Cada formato suportado tem seu parser. Chunker implementa recursive splitting.
 
 ### Tarefas
 
-- [ ] **2.1** — `internal/document/` — Interface Parser + TextParser (TXT, MD)
-- [ ] **2.2** — `internal/document/` — CSVParser
-- [ ] **2.3** — `internal/document/` — StructuredParser (YAML, JSON)
-- [ ] **2.4** — `internal/document/` — PDFParser
-- [ ] **2.5** — `internal/document/` — Registry (detecta formato, retorna parser correto)
-- [ ] **2.6** — `internal/document/` — Testes unitários para cada parser
-- [ ] **2.7** — `internal/chunker/` — Interface Chunker + RecursiveChunker
+- [x] **2.1** — `internal/document/` — Interface Parser + TextParser (TXT, MD)
+- [x] **2.2** — `internal/document/` — CSVParser
+- [x] **2.3** — `internal/document/` — StructuredParser (YAML, JSON)
+- [x] **2.4** — `internal/document/` — PDFParser
+- [x] **2.5** — `internal/document/` — Registry (detecta formato, retorna parser correto)
+- [x] **2.6** — `internal/document/` — Testes unitários para cada parser
+- [x] **2.7** — `internal/chunker/` — Interface Chunker + RecursiveChunker
   - chunk_size=500, overlap=50, separators=["\n\n", "\n", ". ", " "]
-- [ ] **2.8** — `internal/chunker/` — Testes unitários (tamanho, overlap, edge cases)
+- [x] **2.8** — `internal/chunker/` — Testes unitários (tamanho, overlap, edge cases)
 
 ### Critério de Aceite
 
