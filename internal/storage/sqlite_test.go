@@ -225,9 +225,16 @@ func TestSaveDocumentUpsert(t *testing.T) {
 
 // TestNewSQLiteInvalidPath verifica que um path inválido retorna erro descritivo.
 func TestNewSQLiteInvalidPath(t *testing.T) {
-	_, err := NewSQLite("/nonexistent/dir/that/doesnt/exist/db.sqlite")
+	// Cria um arquivo temporário
+	f, _ := os.CreateTemp("", "not-a-dir")
+	defer os.Remove(f.Name())
+	f.Close()
+
+	// Tenta usar o arquivo como se fosse um diretório no path
+	invalidPath := filepath.Join(f.Name(), "db.sqlite")
+	_, err := NewSQLite(invalidPath)
 	if err == nil {
-		t.Error("NewSQLite deveria falhar com path inválido")
+		t.Error("NewSQLite deveria falhar ao tentar criar diretório sobre um arquivo existente")
 	}
 }
 

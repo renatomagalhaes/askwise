@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"fmt"
 	"log/slog"
+	"os"
+	"path/filepath"
 	"time"
 
 	// modernc.org/sqlite é uma implementação pure Go do SQLite — não precisa de CGO.
@@ -40,6 +42,14 @@ type SQLiteStorage struct {
 // Abre a conexão com o arquivo especificado em dbPath e executa o schema
 // de auto-migrate (cria tabela e índices se não existirem).
 func NewSQLite(dbPath string) (*SQLiteStorage, error) {
+	// Garante que o diretório pai existe. Se dbPath for apenas o nome do arquivo,
+	// filepath.Dir retornará "." que MkdirAll tratará sem erro.
+	// modernc.org/sqlite falha com "out of memory" se o diretório não existir.
+	dir := filepath.Dir(dbPath)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return nil, fmt.Errorf("falha ao criar diretório para o banco em %s: %w", dir, err)
+	}
+
 	// database/sql usa o driver registrado por modernc.org/sqlite via blank import.
 	// O DSN "file:<path>" abre (ou cria) o arquivo SQLite.
 	db, err := sql.Open("sqlite", dbPath)
