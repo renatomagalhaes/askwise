@@ -19,7 +19,7 @@ CLI Chat ◀── API Server ◀── RAG Pipeline ◀────────
 | 1     | Data Layer        | SQLite + Qdrant funcionais com testes          | `done`      |
 | 2     | Doc Processing    | Upload → Parse → Chunk funcional com testes    | `done`      |
 | 3     | AI Integration    | Embeddings + LLM via OpenAI com testes         | `done`      |
-| 4     | RAG Pipeline      | Pipeline completo: ingest + query              | `pending`   |
+| 4     | RAG Pipeline      | Pipeline completo: ingest + query              | `done`      |
 | 5     | API Server        | API REST funcional com todos os endpoints      | `pending`   |
 | 6     | CLI Chat          | Chat no terminal, end-to-end funcional         | `pending`   |
 
@@ -165,7 +165,7 @@ texto e fazer chat completion com mensagens arbitrárias.
 
 ---
 
-## Etapa 4: RAG Pipeline
+## Etapa 4: RAG Pipeline ✅ `done`
 
 **Objetivo**: Conectar todos os componentes no orquestrador RAG. Pipeline de ingestão
 (upload → parse → chunk → embed → store) e pipeline de consulta (query → embed → search → generate).
@@ -174,17 +174,17 @@ texto e fazer chat completion com mensagens arbitrárias.
 
 ### Tarefas
 
-- [ ] **4.1** — `internal/retriever/` — Interface Retriever + implementação
+- [x] **4.1** — `internal/retriever/` — Interface Retriever + implementação
   - Combina Embedder + VectorStore
   - Aplica score threshold (RN-11) e diversidade de fontes (RN-12)
-- [ ] **4.2** — `internal/retriever/` — Testes unitários (com mocks)
-- [ ] **4.3** — `internal/rag/` — Orquestrador: método Ingest(file)
+- [x] **4.2** — `internal/retriever/` — Testes unitários (com mocks)
+- [x] **4.3** — `internal/rag/` — Orquestrador: método Ingest(file)
   - Parse → Chunk → Embed → Upsert + SaveDocument
-- [ ] **4.4** — `internal/rag/` — Orquestrador: método Query(question, history)
+- [x] **4.4** — `internal/rag/` — Orquestrador: método Query(question, history)
   - Embed → Search → Build prompt → ChatCompletion
   - System prompt com RN-13, RN-14, RN-15, RN-16
-- [ ] **4.5** — `internal/rag/` — Testes unitários (com mocks de todos os componentes)
-- [ ] **4.6** — Teste de integração do pipeline completo (requer Docker + OpenAI key)
+- [x] **4.5** — `internal/rag/` — Testes unitários (com mocks de todos os componentes)
+- [x] **4.6** — Teste de integração do pipeline completo (requer Docker + OpenAI key)
 
 ### Critério de Aceite
 
