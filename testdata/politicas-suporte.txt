@@ -1,0 +1,107 @@
+=====================================================
+  POLÍTICAS DE ATENDIMENTO — TechSupport Ltda.
+  Versão 2.1 | Vigência: Janeiro 2025
+=====================================================
+
+1. CLASSIFICAÇÃO DE SEVERIDADE
+
+Os incidentes são classificados em 4 níveis de severidade:
+
+P1 (Crítico): Serviço completamente indisponível ou perda de dados em produção. Exemplos: banco de dados corrompido, sistema totalmente fora do ar, vazamento de dados.
+- Tempo de resposta: 15 minutos
+- Tempo de resolução: 4 horas
+- Escalação automática após 1 hora sem resolução
+- Requer post-mortem obrigatório em até 48 horas
+
+P2 (Alto): Funcionalidade principal degradada, afetando múltiplos clientes. Exemplos: lentidão severa, funcionalidade crítica intermitente, falha em integrações.
+- Tempo de resposta: 1 hora
+- Tempo de resolução: 8 horas
+- Escalação automática após 4 horas sem resolução
+- Post-mortem recomendado
+
+P3 (Médio): Funcionalidade secundária com problema, workaround disponível. Exemplos: bug em relatório, filtro não funcionando, erro visual.
+- Tempo de resposta: 4 horas
+- Tempo de resolução: 24 horas
+- Sem escalação automática
+
+P4 (Baixo): Solicitações de melhoria, dúvidas, ajustes cosméticos.
+- Tempo de resposta: 1 dia útil
+- Tempo de resolução: 5 dias úteis
+- Priorizado no backlog normal
+
+
+2. PROCESSO DE ESCALAÇÃO
+
+Nível 1 (L1) — Atendimento Inicial:
+- Equipe de suporte geral
+- Resolve problemas conhecidos usando a base de conhecimento
+- Se não resolver em 30 minutos, escala para L2
+
+Nível 2 (L2) — Suporte Especializado:
+- Engenheiros de suporte sênior
+- Acesso ao código fonte e logs de produção
+- Se não resolver no SLA da severidade, escala para L3
+
+Nível 3 (L3) — Engenharia:
+- Time de desenvolvimento
+- Pode fazer hotfix e deploy emergencial
+- Comunicação direta com o cliente em casos P1
+
+
+3. CANAIS DE ATENDIMENTO
+
+- Slack: #suporte-cliente (resposta mais rápida, recomendado para P1/P2)
+- Email: suporte@techsupport.com (para todas as severidades)
+- Portal: https://suporte.techsupport.com (abertura de tickets com tracking)
+- Telefone: (11) 3000-4000 (apenas P1, horário comercial 8h-18h)
+
+Horário de atendimento:
+- P1: 24x7 (plantão via PagerDuty)
+- P2: Seg-Sex 7h-22h
+- P3/P4: Seg-Sex 8h-18h (horário comercial)
+
+
+4. COMUNICAÇÃO COM O CLIENTE
+
+Durante incidentes P1 e P2:
+- Enviar update a cada 30 minutos (P1) ou a cada 2 horas (P2)
+- Usar template de status: [Investigando|Identificado|Monitorando|Resolvido]
+- Comunicar impacto, ações em andamento e próximos passos
+- Nunca prometer prazo exato — usar "estamos trabalhando ativamente"
+
+Após resolução:
+- Enviar RCA (Root Cause Analysis) em até 48 horas para P1
+- Incluir: o que aconteceu, por que aconteceu, o que foi feito, o que será feito para prevenir
+- Agendar call de revisão com o cliente se solicitado
+
+
+5. FERRAMENTAS UTILIZADAS
+
+- Jira Service Management: gestão de tickets e SLA tracking
+- PagerDuty: alertas e rotação de plantão
+- Slack: comunicação interna e com clientes
+- Grafana: monitoramento de métricas e dashboards
+- Datadog: APM (Application Performance Monitoring) e logs
+- Statuspage: comunicação pública de status do sistema
+- Confluence: base de conhecimento interna
+
+
+6. MÉTRICAS DE QUALIDADE
+
+O time de suporte é avaliado mensalmente nas seguintes métricas:
+
+- MTTR (Mean Time to Resolve): Tempo médio de resolução. Meta: <4h para P1, <8h para P2.
+- First Contact Resolution (FCR): Percentual resolvido no primeiro contato. Meta: >60%.
+- Customer Satisfaction (CSAT): Pesquisa pós-atendimento. Meta: >4.2/5.0.
+- SLA Compliance: Percentual de tickets resolvidos dentro do SLA. Meta: >95%.
+- Ticket Reopen Rate: Percentual de tickets reabertos. Meta: <5%.
+
+
+7. POLÍTICA DE BACKUP E RECUPERAÇÃO
+
+- Banco de dados PostgreSQL: backup completo diário às 3h + WAL archiving contínuo
+- Point-in-time recovery disponível para últimos 30 dias
+- Teste de restauração mensal obrigatório (simulado em ambiente de staging)
+- RPO (Recovery Point Objective): 1 hora
+- RTO (Recovery Time Objective): 4 horas
+- Backups armazenados em região separada (cross-region replication)

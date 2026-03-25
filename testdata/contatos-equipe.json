@@ -1,0 +1,74 @@
+{
+  "empresa": "TechSupport Ltda.",
+  "departamento": "Engenharia e Suporte",
+  "atualizado_em": "2025-01-15",
+  "equipes": [
+    {
+      "nome": "Suporte L1 — Atendimento Inicial",
+      "slack_channel": "#suporte-l1",
+      "responsavel": "Marina Costa",
+      "horario": "Seg-Sex 8h-18h",
+      "membros": [
+        {"nome": "Ana Oliveira", "email": "ana.oliveira@techsupport.com", "especialidade": "Atendimento geral e triagem"},
+        {"nome": "Carlos Mendes", "email": "carlos.mendes@techsupport.com", "especialidade": "Integrações e APIs de parceiros"},
+        {"nome": "Julia Santos", "email": "julia.santos@techsupport.com", "especialidade": "Problemas de acesso e autenticação"},
+        {"nome": "Pedro Lima", "email": "pedro.lima@techsupport.com", "especialidade": "Configuração e onboarding de clientes"}
+      ],
+      "procedimentos": "Consultar base de conhecimento primeiro. Escalar para L2 se não resolver em 30 minutos. Sempre registrar ticket no Jira."
+    },
+    {
+      "nome": "Suporte L2 — Especializado",
+      "slack_channel": "#suporte-l2",
+      "responsavel": "Ricardo Alves",
+      "horario": "Seg-Sex 7h-22h, plantão P1 24x7",
+      "membros": [
+        {"nome": "Ricardo Alves", "email": "ricardo.alves@techsupport.com", "especialidade": "Infraestrutura e Kubernetes"},
+        {"nome": "Fernanda Rocha", "email": "fernanda.rocha@techsupport.com", "especialidade": "Banco de dados e performance"},
+        {"nome": "Bruno Teixeira", "email": "bruno.teixeira@techsupport.com", "especialidade": "Segurança e compliance"},
+        {"nome": "Camila Ferreira", "email": "camila.ferreira@techsupport.com", "especialidade": "Mensageria e filas (RabbitMQ)"}
+      ],
+      "procedimentos": "Acesso completo a logs e métricas de produção. Pode executar runbooks pré-aprovados. Para mudanças em produção, necessário aprovação do tech lead."
+    },
+    {
+      "nome": "Engenharia L3 — Desenvolvimento",
+      "slack_channel": "#eng-backend",
+      "responsavel": "Lucas Martins",
+      "horario": "Seg-Sex 9h-18h, plantão P1 via PagerDuty",
+      "membros": [
+        {"nome": "Lucas Martins", "email": "lucas.martins@techsupport.com", "especialidade": "Tech Lead — Arquitetura e decisões técnicas"},
+        {"nome": "Isabela Souza", "email": "isabela.souza@techsupport.com", "especialidade": "Backend — APIs e microsserviços"},
+        {"nome": "Gabriel Nascimento", "email": "gabriel.nascimento@techsupport.com", "especialidade": "DevOps — CI/CD e infraestrutura como código"},
+        {"nome": "Tatiana Ribeiro", "email": "tatiana.ribeiro@techsupport.com", "especialidade": "Data — Pipeline de dados e analytics"}
+      ],
+      "procedimentos": "Responsáveis por hotfixes e deploys emergenciais. Comunicação direta com cliente em incidentes P1. Post-mortem obrigatório após P1."
+    },
+    {
+      "nome": "Gestão e Coordenação",
+      "slack_channel": "#suporte-gestao",
+      "responsavel": "Patrícia Vieira",
+      "membros": [
+        {"nome": "Patrícia Vieira", "email": "patricia.vieira@techsupport.com", "especialidade": "Head de Suporte — Estratégia e métricas"},
+        {"nome": "Marcos Pereira", "email": "marcos.pereira@techsupport.com", "especialidade": "Gerente de Contas — Relacionamento com clientes-chave"}
+      ],
+      "procedimentos": "Envolvidos em escalações de clientes insatisfeitos. Revisam SLAs mensalmente. Aprovam exceções de SLA."
+    }
+  ],
+  "plantao": {
+    "rotacao": "semanal",
+    "ferramenta": "PagerDuty",
+    "canal_urgente": "#oncall-emergencia",
+    "telefone_plantao": "(11) 3000-4001",
+    "regras": [
+      "Responder alerta em até 5 minutos",
+      "Se não responder, PagerDuty escala para o próximo na lista",
+      "Após resolver incidente P1, registrar timeline no post-mortem",
+      "Compensação: folga no dia seguinte após plantão noturno"
+    ]
+  },
+  "contatos_externos": [
+    {"servico": "AWS Support", "plano": "Business", "contato": "Console AWS > Support Center", "sla": "1 hora para critical"},
+    {"servico": "SendGrid", "contato": "support.sendgrid.com", "sla": "4 horas"},
+    {"servico": "PayGateway", "contato": "partners@paygateway.com", "sla": "2 horas para P1"},
+    {"servico": "DataFlow API", "contato": "support@dataflow.io", "sla": "8 horas"}
+  ]
+}

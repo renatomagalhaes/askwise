@@ -1,0 +1,162 @@
+# Configuração dos Serviços — TechSupport Ltda.
+# Ambiente: Produção
+# Última revisão: Janeiro 2025
+
+services:
+  backend-api:
+    description: API principal do sistema TechSupport
+    port: 8080
+    replicas: 3
+    health_check: /health
+    resources:
+      cpu: "500m"
+      memory: "512Mi"
+    environment:
+      LOG_LEVEL: INFO
+      DATABASE_POOL_SIZE: 20
+      CACHE_TTL_SECONDS: 300
+      MAX_REQUEST_SIZE_MB: 10
+    alerts:
+      cpu_threshold: 80
+      memory_threshold: 85
+      error_rate_threshold: 5
+      latency_p99_ms: 500
+
+  worker:
+    description: Processador de jobs assíncronos e filas
+    replicas: 2
+    resources:
+      cpu: "250m"
+      memory: "256Mi"
+    environment:
+      QUEUE_CONCURRENCY: 10
+      JOB_TIMEOUT_SECONDS: 300
+      RETRY_MAX_ATTEMPTS: 3
+      DEAD_LETTER_QUEUE: dlq-production
+    alerts:
+      queue_depth_threshold: 10000
+      processing_lag_seconds: 60
+
+  scheduler:
+    description: Agendador de tarefas periódicas (cron jobs)
+    replicas: 1
+    resources:
+      cpu: "100m"
+      memory: "128Mi"
+    jobs:
+      - name: backup-database
+        schedule: "0 3 * * *"
+        description: Backup completo do PostgreSQL
+        timeout: 1800
+      - name: cleanup-logs
+        schedule: "0 4 * * *"
+        description: Limpa logs com mais de 30 dias
+        timeout: 600
+      - name: sync-partners
+        schedule: "*/15 * * * *"
+        description: Sincroniza dados com parceiros via API
+        timeout: 300
+      - name: generate-reports
+        schedule: "0 6 * * 1"
+        description: Gera relatórios semanais para clientes
+        timeout: 3600
+      - name: certificate-check
+        schedule: "0 8 * * *"
+        description: Verifica expiração de certificados SSL
+        timeout: 120
+
+  database:
+    description: PostgreSQL principal
+    version: "15.4"
+    port: 5432
+    storage: 100Gi
+    backup:
+      schedule: "0 3 * * *"
+      retention_days: 30
+      cross_region: true
+      target_bucket: s3://techsupport-backups-dr
+    parameters:
+      max_connections: 200
+      shared_buffers: "256MB"
+      effective_cache_size: "768MB"
+      maintenance_work_mem: "128MB"
+      wal_level: replica
+      max_wal_senders: 3
+    monitoring:
+      slow_query_threshold_ms: 1000
+      connection_pool_alert: 80
+      disk_usage_alert: 85
+
+  cache:
+    description: Redis para cache e sessões
+    version: "7.2"
+    port: 6379
+    memory: "512Mi"
+    eviction_policy: allkeys-lru
+    persistence: false
+    parameters:
+      maxmemory_policy: allkeys-lru
+      timeout: 300
+      tcp_keepalive: 60
+
+  message_broker:
+    description: RabbitMQ para mensageria assíncrona
+    version: "3.12"
+    port: 5672
+    management_port: 15672
+    resources:
+      memory: "1Gi"
+    queues:
+      - name: notifications
+        durable: true
+        ttl_ms: 86400000
+        max_length: 100000
+      - name: payments
+        durable: true
+        ttl_ms: 3600000
+        max_length: 50000
+        priority: true
+      - name: analytics
+        durable: false
+        ttl_ms: 43200000
+        max_length: 500000
+      - name: dlq-production
+        durable: true
+        description: Dead letter queue para mensagens com falha
+
+  monitoring:
+    grafana:
+      port: 3000
+      dashboards:
+        - production-overview
+        - api-performance
+        - database-health
+        - queue-metrics
+        - error-tracking
+    prometheus:
+      port: 9090
+      scrape_interval: 15s
+      retention_days: 30
+    alertmanager:
+      port: 9093
+      channels:
+        - type: slack
+          channel: "#alerts-production"
+          severity: warning
+        - type: pagerduty
+          severity: critical
+        - type: email
+          recipients: "oncall@techsupport.com"
+          severity: critical
+
+networking:
+  ingress:
+    domain: app.techsupport.com
+    tls: true
+    rate_limit:
+      requests_per_minute: 1000
+      burst: 50
+  internal:
+    service_mesh: false
+    dns: coredns
+    network_policy: restricted

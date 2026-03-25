@@ -147,6 +147,119 @@ make dev-shell         # Shell dentro do container
 make clean             # Remove tudo (containers + volumes + dados)
 ```
 
+## Testando com Documentos de Exemplo
+
+O projeto inclui documentos de teste do cenário fictício **TechSupport Ltda.** — uma
+empresa de suporte técnico com runbooks, tickets, políticas e configurações.
+
+```bash
+# 1. Suba a infra
+make up
+
+# 2. Envie todos os documentos de exemplo
+make upload FILE=testdata/techsupport-runbook.md
+make upload FILE=testdata/erros-conhecidos.txt
+make upload FILE=testdata/politicas-suporte.txt
+make upload FILE=testdata/tickets-suporte.csv
+make upload FILE=testdata/config-servicos.yaml
+make upload FILE=testdata/contatos-equipe.json
+
+# 3. Verifique que foram indexados
+curl http://localhost:8484/api/v1/documents | jq
+
+# 4. Abra o chat e faça perguntas
+make chat
+```
+
+### Exemplos de perguntas para testar
+
+Cada pergunta abaixo pode ser respondida com base nos documentos enviados.
+Experimente no `make chat`:
+
+**Troubleshooting (runbook + erros conhecidos):**
+```
+Como resolver o erro 5032 de timeout?
+Quais são as causas do erro 4010 de autenticação OAuth?
+O que fazer quando o disco fica cheio no servidor de logs?
+Como resolver o erro de rate limit na API de pagamentos?
+O certificado SSL expirou, qual o procedimento?
+O container está sendo encerrado com OOMKilled, o que fazer?
+Como resolver problemas com a fila de mensagens do RabbitMQ?
+```
+
+**Políticas e processos:**
+```
+Qual o SLA de resposta para incidentes P1?
+Como funciona o processo de escalação de suporte?
+Quais são os canais de atendimento disponíveis?
+Qual o horário de atendimento para incidentes P2?
+Como funciona a comunicação com o cliente durante incidentes?
+Quais métricas são usadas para avaliar o time de suporte?
+Qual a política de backup e recuperação do banco de dados?
+```
+
+**Deploy e operações:**
+```
+Me explique o processo de deploy em produção passo a passo.
+O que fazer se precisar de rollback em produção?
+Qual a configuração de memória do backend-api em produção?
+Quais jobs rodam no scheduler? Em que horários?
+Quais dashboards existem no Grafana?
+```
+
+**Tickets e histórico:**
+```
+O que aconteceu no ticket TK-006 sobre banco corrompido?
+Como foi resolvido o problema de notificações duplicadas?
+Qual foi a causa do problema de relatórios lentos no dashboard?
+Como resolveram as tentativas de login suspeitas da Beta Systems?
+Quais tickets foram classificados como P1?
+```
+
+**Equipe e contatos:**
+```
+Quem é responsável pelo suporte L2?
+Qual o canal do Slack para emergências?
+Quem contatar para problemas com o gateway de pagamento?
+Como funciona a rotação de plantão?
+Quem é a especialista em banco de dados e performance?
+```
+
+**Follow-up (usa histórico da conversa):**
+```
+você> Como resolver o erro 5032?
+       (aguarde a resposta)
+você> E se o problema persistir depois disso?
+você> Quem devo acionar nesse caso?
+```
+
+### Documentos de teste disponíveis
+
+| Arquivo | Formato | Conteúdo |
+|---------|---------|----------|
+| `techsupport-runbook.md` | Markdown | Runbook com 5 procedimentos de suporte (erros, deploy, FAQ) |
+| `erros-conhecidos.txt` | Texto | 6 erros conhecidos com causa raiz e solução passo a passo |
+| `politicas-suporte.txt` | Texto | Políticas de atendimento, SLAs, escalação e métricas |
+| `tickets-suporte.csv` | CSV | 12 tickets reais resolvidos com descrição e resolução |
+| `config-servicos.yaml` | YAML | Configuração de todos os serviços de produção |
+| `contatos-equipe.json` | JSON | Equipes, membros, canais de comunicação e contatos |
+
+## Diagramas de Arquitetura
+
+O documento [`docs/DIAGRAMAS.md`](docs/DIAGRAMAS.md) contém diagramas Mermaid renderizáveis no GitHub:
+
+| Diagrama | Tipo | O que mostra |
+|----------|------|-------------|
+| C4 Contexto | C4 Context | AskWise vs sistemas externos (OpenAI, Qdrant) |
+| C4 Containers | C4 Container | API Server, CLI, SQLite, Qdrant |
+| Componentes | Graph | Pacotes Go e suas dependências |
+| Ingestão | Sequence | Fluxo completo de upload de documento |
+| Consulta | Sequence | Fluxo completo de pergunta no chat |
+| Validação Upload | Flowchart | Decisões e validações (RN-01 a RN-05) |
+| Loop CLI | Flowchart | Interação do chat com comandos |
+| Docker Compose | Graph | Containers e volumes da stack |
+| Modelo de Dados | ER Diagram | SQLite (documents) + Qdrant (chunks/vetores) |
+
 ## Formatos Suportados
 
 | Formato | Extensão | Descrição                          |

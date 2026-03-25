@@ -1,0 +1,98 @@
+=== Base de Erros Conhecidos — TechSupport Ltda. ===
+Última atualização: Janeiro 2025
+
+--- ERRO 1001: Falha na Conexão com Banco de Dados ---
+
+Sintoma: A aplicação exibe "Connection refused" ao tentar acessar o banco de dados PostgreSQL.
+
+Causa raiz: O pool de conexões atingiu o limite máximo configurado (padrão: 20 conexões).
+
+Solução rápida:
+1. Verificar conexões ativas: SELECT count(*) FROM pg_stat_activity WHERE state = 'active';
+2. Identificar conexões paradas: SELECT * FROM pg_stat_activity WHERE state = 'idle' AND query_start < NOW() - INTERVAL '10 minutes';
+3. Encerrar conexões órfãs: SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE state = 'idle' AND query_start < NOW() - INTERVAL '30 minutes';
+4. Aumentar pool se necessário: editar DATABASE_POOL_SIZE no arquivo .env do serviço
+5. Reiniciar o serviço: systemctl restart app-backend
+
+Prevenção: Configurar health check de conexão a cada 60 segundos no pool. Ativar alerta quando uso do pool atingir 80%.
+
+
+--- ERRO 2003: Rate Limit Excedido na API de Pagamentos ---
+
+Sintoma: Requisições para o gateway de pagamento retornam HTTP 429 (Too Many Requests).
+
+Causa raiz: O sistema está enviando mais de 100 requisições por minuto para a API do gateway, que tem limite de rate de 100 req/min por merchant.
+
+Solução rápida:
+1. Verificar volume atual: grep "payment_api" /var/log/app/requests.log | wc -l
+2. Ativar fila de retry: editar config/payments.yaml e setar retry_with_backoff: true
+3. Configurar exponential backoff: initial_delay: 1s, max_delay: 30s, multiplier: 2
+4. Se for pico de vendas, solicitar aumento de limite ao gateway (contato: partners@paygateway.com)
+5. Considerar implementar cache local para consultas de status (TTL: 5 minutos)
+
+Prevenção: Implementar circuit breaker no client HTTP. Usar fila assíncrona para processamento de pagamentos em lote.
+
+
+--- ERRO 3050: Certificado SSL Expirado ---
+
+Sintoma: Navegadores exibem "NET::ERR_CERT_DATE_INVALID". APIs externas retornam erros de TLS handshake.
+
+Causa raiz: O certificado SSL/TLS do domínio expirou e não foi renovado automaticamente.
+
+Solução rápida:
+1. Verificar expiração: echo | openssl s_client -connect app.techsupport.com:443 2>/dev/null | openssl x509 -noout -dates
+2. Se usar Let's Encrypt: certbot renew --force-renewal
+3. Se usar certificado manual: fazer upload do novo certificado no load balancer
+4. Verificar configuração do NGINX: nginx -t && systemctl reload nginx
+5. Testar em todas as URLs: curl -vI https://app.techsupport.com/health
+
+Prevenção: Configurar alerta 30 dias antes da expiração. Usar certbot com cron para renovação automática. Monitorar com uptime robot.
+
+
+--- ERRO 4500: Falha no Envio de Email ---
+
+Sintoma: Emails de notificação e confirmação não estão sendo entregues. Fila de emails crescendo.
+
+Causa raiz: O provedor de email (SendGrid) bloqueou o envio por causa de alta taxa de bounce (>5%).
+
+Solução rápida:
+1. Verificar status da conta: acessar app.sendgrid.com > Activity > Suppressions
+2. Limpar lista de bounces: remover emails inválidos do banco de dados
+3. Verificar SPF/DKIM: nslookup -type=txt _dmarc.techsupport.com
+4. Se a conta estiver suspensa, abrir ticket com SendGrid: support.sendgrid.com
+5. Ativar provedor de fallback (AWS SES): editar config/email.yaml setar fallback_provider: ses
+
+Prevenção: Validar emails na criação de conta. Implementar double opt-in. Limpar lista de contatos trimestralmente. Manter taxa de bounce abaixo de 2%.
+
+
+--- ERRO 7200: Memória Insuficiente no Container ---
+
+Sintoma: Container é encerrado com OOMKilled. Serviço reinicia frequentemente.
+
+Causa raiz: A aplicação está consumindo mais memória do que o limite configurado no Kubernetes (padrão: 512Mi para backend).
+
+Solução rápida:
+1. Verificar uso de memória: kubectl top pods -n production
+2. Analisar histórico: kubectl describe pod <pod-name> | grep -A5 "Last State"
+3. Verificar por memory leaks: habilitar profiling em /debug/pprof/heap
+4. Aumentar limite temporariamente: kubectl set resources deployment/backend -c app --limits=memory=1Gi
+5. Se for leak, capturar heap dump e analisar: go tool pprof http://localhost:6060/debug/pprof/heap
+
+Prevenção: Configurar Vertical Pod Autoscaler (VPA). Monitorar métricas de memória no Grafana. Rodar testes de carga antes de releases. Nunca colocar limite de memória abaixo de 256Mi.
+
+
+--- ERRO 8010: Timeout na Fila de Mensagens ---
+
+Sintoma: Mensagens não estão sendo processadas. Consumers ficam parados.
+
+Causa raiz: O broker RabbitMQ atingiu o limite de memória e está bloqueando publishers (flow control ativo).
+
+Solução rápida:
+1. Verificar status do RabbitMQ: rabbitmqctl status | grep -A5 "memory"
+2. Verificar filas acumuladas: rabbitmqctl list_queues name messages_ready messages_unacknowledged
+3. Purgar filas não críticas: rabbitmqctl purge_queue <queue_name>
+4. Aumentar memória do RabbitMQ: editar rabbitmq.conf setar vm_memory_high_watermark.relative = 0.6
+5. Escalar consumers: kubectl scale deployment/worker --replicas=5
+6. Reiniciar RabbitMQ se necessário: systemctl restart rabbitmq-server
+
+Prevenção: Configurar alertas para tamanho de fila > 10000 mensagens. Implementar dead letter queue para mensagens com falha. Limitar TTL de mensagens para 24 horas.
