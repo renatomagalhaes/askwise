@@ -16,7 +16,7 @@ CLI Chat ◀── API Server ◀── RAG Pipeline ◀────────
 | Etapa | Nome              | Entregável                                    | Status      |
 |-------|-------------------|-----------------------------------------------|-------------|
 | 0     | Foundation        | Projeto compila e roda via Docker              | `done`      |
-| 1     | Data Layer        | SQLite + Qdrant funcionais com testes          | `pending`   |
+| 1     | Data Layer        | SQLite + Qdrant funcionais com testes          | `done`      |
 | 2     | Doc Processing    | Upload → Parse → Chunk funcional com testes    | `pending`   |
 | 3     | AI Integration    | Embeddings + LLM via OpenAI com testes         | `pending`   |
 | 4     | RAG Pipeline      | Pipeline completo: ingest + query              | `pending`   |
@@ -64,7 +64,7 @@ O desenvolvedor (ou IA) pode rodar `make up` e começar a trabalhar.
 
 ---
 
-## Etapa 1: Data Layer
+## Etapa 1: Data Layer ✅ `done`
 
 **Objetivo**: Camada de dados funcional. SQLite armazena metadados de documentos.
 Qdrant client cria collection e faz CRUD de vetores. Ambos com testes unitários.
@@ -73,15 +73,15 @@ Qdrant client cria collection e faz CRUD de vetores. Ambos com testes unitários
 
 ### Tarefas
 
-- [ ] **1.1** — `internal/storage/` — Interface Storage + implementação SQLite
+- [x] **1.1** — `internal/storage/` — Interface Storage + implementação SQLite
   - SaveDocument, GetDocument, ListDocuments, DeleteDocument, GetDocumentByName
   - Auto-create table + indexes na inicialização
-- [ ] **1.2** — `internal/storage/` — Testes unitários (table-driven)
-- [ ] **1.3** — `internal/vectorstore/` — Interface VectorStore + implementação Qdrant
-  - CreateCollection, Upsert, Search, DeleteByDocID
-- [ ] **1.4** — `internal/vectorstore/` — Testes de integração (contra Qdrant real via Docker)
-- [ ] **1.5** — ADR-003: SQLite para metadados (decisão e alternativas)
-- [ ] **1.6** — ADR-004: Qdrant como vector store (decisão e alternativas)
+- [x] **1.2** — `internal/storage/` — Testes unitários (table-driven)
+- [x] **1.3** — `internal/vectorstore/` — Interface VectorStore + implementação Qdrant
+  - EnsureCollection, Upsert, Search, DeleteByDocID (REST API via net/http)
+- [x] **1.4** — `internal/vectorstore/` — Testes de integração (contra Qdrant real via Docker)
+- [x] **1.5** — ADR-003: SQLite para metadados (decisão e alternativas)
+- [x] **1.6** — ADR-004: Qdrant como vector store (decisão e alternativas)
 
 ### Critério de Aceite
 

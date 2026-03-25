@@ -62,7 +62,7 @@ CMD ["/bin/askwise-server"]
 # ---------------------------------------------------------------------------
 FROM golang:1.26.1-alpine AS dev
 
-RUN apk add --no-cache git ca-certificates tzdata make curl jq
+RUN apk add --no-cache git ca-certificates tzdata make curl jq gcc musl-dev bash
 
 WORKDIR /app
 

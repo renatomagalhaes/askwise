@@ -141,9 +141,9 @@ Siga esta ordem para implementar os componentes:
 go.mod:
   - modernc.org/sqlite         (SQLite pure Go, sem CGO)
   - github.com/google/uuid     (geração de UUIDs)
-  - github.com/qdrant/go-client (client Qdrant)
-  - github.com/joho/godotenv   (carregar .env)
+  - github.com/joho/godotenv   (carregar .env — se necessário)
   - github.com/ledongthuc/pdf  (parsing de PDF)
+  Nota: Qdrant usa REST API via net/http (sem client gRPC) — RNF-03 simplicidade
 ```
 
 ## ADRs (Architecture Decision Records)

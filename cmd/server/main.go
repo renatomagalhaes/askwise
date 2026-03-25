@@ -94,7 +94,7 @@ func handleHealth(cfg *config.Config) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Verifica cada dependência
 		qdrantStatus := checkQdrant(cfg)
-		sqliteStatus := "connected" // SQLite será verificado na Etapa 1
+		sqliteStatus := "connected" // SQLite auto-cria na inicialização (storage.NewSQLite)
 		openaiStatus := "not_configured"
 		if cfg.OpenAIConfigured() {
 			openaiStatus = "configured"
