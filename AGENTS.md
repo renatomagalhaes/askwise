@@ -3,17 +3,19 @@
 ## Sobre o Projeto
 
 AskWise é uma PoC de chatbot RAG (Retrieval-Augmented Generation) em Go.
-O objetivo é educativo — aprender RAG e a metodologia SDD (Spec-Design-Development).
+O objetivo é educativo — aprender RAG e a metodologia SDD (Spec-Driven Development).
 
 ## Metodologia SDD
 
-Este projeto segue a metodologia **SDD**. Antes de implementar qualquer código:
+Este projeto segue a metodologia **SDD (Spec-Driven Development)** — a especificação
+dirige todo o desenvolvimento. Antes de implementar qualquer código:
 
-1. **Leia a Spec** em `docs/spec/` para entender O QUE construir
-2. **Leia o Design** em `docs/design/` para entender COMO construir
-3. **Implemente** seguindo as definições de spec e design
+1. **Leia a Spec** em `docs/spec/` — é a fonte de verdade sobre O QUE construir e as regras
+2. **Leia o Design** em `docs/design/` — a spec materializada em arquitetura, dados e APIs
+3. **Implemente dirigido pela spec** — cada decisão no código deve ser rastreável a um item da spec
 
-Se algo não está definido na spec ou design, pergunte ao usuário antes de inventar.
+Se algo não está definido na spec, pergunte ao usuário antes de inventar.
+A spec dirige, o código segue.
 
 ## Documentação Obrigatória
 

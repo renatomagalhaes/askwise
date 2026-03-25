@@ -72,13 +72,17 @@ askwise/
 └── .env.example                 # Variáveis de ambiente
 ```
 
-## Metodologia: SDD (Spec-Design-Development)
+## Metodologia: SDD (Spec-Driven Development)
 
-Este projeto segue a metodologia **SDD**, que organiza o desenvolvimento em 3 fases:
+Este projeto segue a metodologia **SDD** — onde a **especificação dirige todo o
+desenvolvimento**. Em vez de codificar direto, primeiro criamos documentos de spec
+detalhados que servem como fonte de verdade para humanos e agentes de IA:
 
-1. **Spec** — Definir O QUE será construído (requisitos, regras, cenário)
-2. **Design** — Definir COMO será construído (arquitetura, modelos, APIs)
-3. **Development** — Construir o sistema seguindo spec e design
+1. **Spec** — Documentos detalhados definem requisitos, regras, arquitetura, APIs e modelos
+2. **Development** — O código é implementado **dirigido pela spec**, usando-a como guia único
+
+A spec não é apenas documentação — ela é o **motor do desenvolvimento**, especialmente
+quando combinada com agentes de IA que leem a spec e geram código alinhado automaticamente.
 
 Leia mais em [`docs/learn/02-SDD-METHODOLOGY.md`](docs/learn/02-SDD-METHODOLOGY.md).
 

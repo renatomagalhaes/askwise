@@ -58,7 +58,7 @@ Como este é um projeto PoC educativo, os objetivos técnicos incluem:
 | 5 | Construir pipeline RAG                    | Retrieval-Augmented Generation            |
 | 6 | Integrar com LLM                          | Prompt engineering, chat completion       |
 | 7 | Criar CLI interativo                      | Terminal UI em Go                         |
-| 8 | Seguir metodologia SDD                    | Spec-Design-Development                   |
+| 8 | Seguir metodologia SDD                    | Spec-Driven Development                   |
 
 ## 6. Escopo
 

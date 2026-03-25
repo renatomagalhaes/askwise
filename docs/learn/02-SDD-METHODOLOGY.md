@@ -1,236 +1,299 @@
-# Metodologia SDD — Spec-Design-Development
+# Metodologia SDD — Spec-Driven Development
 
 ## 1. O que é SDD?
 
-**SDD (Spec-Design-Development)** é uma metodologia de desenvolvimento que organiza a
-construção de software em três fases sequenciais e bem definidas. Cada fase produz
-artefatos que alimentam a próxima.
+**SDD (Spec-Driven Development)** é uma metodologia onde a **especificação dirige todo o
+desenvolvimento**. A spec não é apenas documentação que ninguém lê — ela é a **fonte única
+de verdade** que guia cada decisão de código, arquitetura e implementação.
+
+O nome diz tudo: **Spec-Driven** — a especificação é o motor, o volante, o GPS.
+O código é o carro que segue a direção definida pela spec.
 
 ```
-┌────────────┐     ┌────────────┐     ┌────────────────┐
-│    SPEC    │────▶│   DESIGN   │────▶│  DEVELOPMENT   │
-│            │     │            │     │                │
-│  O QUE     │     │  COMO      │     │  CONSTRUIR     │
-│  construir │     │  construir │     │  de fato       │
-└────────────┘     └────────────┘     └────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│                                                              │
+│              SPEC  (Fonte Única de Verdade)                   │
+│                                                              │
+│   Requisitos ─── Regras ─── Arquitetura ─── APIs ─── Dados  │
+│                                                              │
+└──────────┬──────────────────────┬────────────────────────────┘
+           │                      │
+           │    DIRIGE            │    DIRIGE
+           ▼                      ▼
+    ┌──────────────┐      ┌──────────────┐
+    │  Desenvolvedor│      │  Agente IA   │
+    │  (humano)    │      │  (Cursor,    │
+    │              │      │   Copilot)   │
+    │  Lê a spec,  │      │  Lê a spec,  │
+    │  implementa  │      │  gera código │
+    │  alinhado    │      │  alinhado    │
+    └──────────────┘      └──────────────┘
 ```
 
-### A Analogia da Casa
+### Analogia: O GPS da Viagem
 
-Pense em construir uma casa:
+Imagine uma viagem de carro:
 
-1. **Spec** = O que o morador quer: "3 quartos, 2 banheiros, garagem, quintal grande"
-2. **Design** = A planta do arquiteto: desenhos, materiais, estrutura
-3. **Development** = A construção: pedreiro seguindo a planta
+- **Sem SDD**: Você sai dirigindo "mais ou menos pra lá", fazendo curvas erradas,
+  voltando, perguntando no caminho. Chega (talvez), mas gasta o triplo do tempo.
+- **Com SDD**: Você programa o GPS (spec) com destino exato, paradas planejadas e
+  rotas alternativas. O GPS **dirige** suas decisões a cada cruzamento.
 
-Ninguém começa a erguer paredes sem saber quantos quartos terá.
-Da mesma forma, não devemos codificar sem saber o que e como construir.
+A spec é o GPS. Você (ou a IA) é o motorista.
 
-## 2. Por que usar SDD?
+## 2. Por que SDD é Essencial com IA?
 
-### Problemas que SDD Resolve
+SDD ganha um poder multiplicado quando usado com agentes de IA (Cursor, Copilot, ChatGPT).
+Esse é o contexto central do nosso projeto AskWise.
 
-| Problema Comum                          | Como SDD Resolve                        |
-|-----------------------------------------|-----------------------------------------|
-| "O que exatamente vamos construir?"     | Spec define claramente escopo e regras  |
-| "Cada dev implementa de um jeito"       | Design padroniza arquitetura e APIs     |
-| "Descobrimos problemas tarde demais"    | Spec e Design antecipam questões        |
-| "O código virou um espaguete"           | Design define estrutura modular         |
-| "IA gera código que não faz sentido"    | Spec e Design guiam a geração de código |
-
-### SDD + Desenvolvimento com IA
-
-SDD é especialmente poderoso quando combinado com assistentes de IA (como Cursor, Copilot):
-
-- **Spec** → Dá à IA contexto sobre O QUE construir
-- **Design** → Dá à IA contexto sobre COMO construir
-- **Development** → IA gera código alinhado com spec e design
-
-Sem SDD, a IA gera código "genérico". Com SDD, a IA gera código **específico e alinhado**.
-
-## 3. Fase 1: SPEC (Especificação)
-
-### O que produzir
-
-A fase de Spec responde: **"O QUE vamos construir e POR QUÊ?"**
-
-| Artefato              | Conteúdo                                          | Exemplo no AskWise             |
-|-----------------------|---------------------------------------------------|--------------------------------|
-| Visão Geral           | Propósito, problema, solução, escopo              | `01-VISAO-GERAL.md`           |
-| Cenário de Negócio    | Contexto real, personas, jornadas                 | `02-CENARIO-NEGOCIO.md`       |
-| Requisitos            | Funcionais, não-funcionais, restrições            | `03-REQUISITOS.md`            |
-| Regras de Negócio     | Lógica e regras que o sistema deve seguir         | `04-REGRAS-NEGOCIO.md`        |
-
-### Boas Práticas
-
-- **Seja específico**: "O sistema aceita PDF, CSV, TXT" em vez de "O sistema aceita arquivos"
-- **Use cenários reais**: Personas e jornadas de uso concretas
-- **Defina limites**: O que está no escopo e o que NÃO está
-- **Numere tudo**: RF-01, RN-01 facilitam referência cruzada
-- **Priorize**: Nem tudo precisa estar no MVP
-
-### Checklist da Spec
-
-- [ ] O problema está claramente descrito?
-- [ ] A solução é específica e mensurável?
-- [ ] As personas e jornadas estão definidas?
-- [ ] Os requisitos funcionais cobrem todos os casos?
-- [ ] Os requisitos não-funcionais definem qualidade esperada?
-- [ ] As regras de negócio são claras e sem ambiguidade?
-- [ ] O escopo está delimitado (incluído vs. excluído)?
-
-## 4. Fase 2: DESIGN (Projeto)
-
-### O que produzir
-
-A fase de Design responde: **"COMO vamos construir?"**
-
-| Artefato              | Conteúdo                                          | Exemplo no AskWise             |
-|-----------------------|---------------------------------------------------|--------------------------------|
-| Arquitetura           | Componentes, camadas, fluxos, decisões técnicas   | `01-ARQUITETURA.md`            |
-| Modelo de Dados       | Tabelas, schemas, relacionamentos, structs        | `02-MODELO-DADOS.md`           |
-| API Design            | Endpoints, payloads, status codes, exemplos       | `03-API-DESIGN.md`             |
-
-### Princípios de Design
-
-1. **Separação de Responsabilidades**: Cada componente faz UMA coisa
-2. **Interfaces bem definidas**: Contratos claros entre componentes
-3. **Decisões justificadas**: Documentar POR QUÊ cada escolha foi feita
-4. **Diagramas visuais**: ASCII art, fluxos, tabelas — tudo que facilite entendimento
-
-### Checklist do Design
-
-- [ ] A arquitetura está clara em diagrama?
-- [ ] Cada componente tem responsabilidade definida?
-- [ ] Os fluxos de dados estão mapeados?
-- [ ] O modelo de dados cobre todos os requisitos?
-- [ ] A API está definida com exemplos?
-- [ ] As decisões técnicas estão justificadas?
-- [ ] As interfaces/contratos estão definidos?
-
-## 5. Fase 3: DEVELOPMENT (Desenvolvimento)
-
-### O que produzir
-
-A fase de Development responde: **"Vamos CONSTRUIR seguindo spec e design."**
-
-| Artefato              | Conteúdo                                          |
-|-----------------------|---------------------------------------------------|
-| Código fonte          | Implementação seguindo a arquitetura definida      |
-| Testes                | Unitários e de integração validando requisitos     |
-| Documentação no código| Comentários explicando o "porquê", não o "o quê"  |
-| README                | Como rodar, configurar, usar                       |
-| Makefile              | Automatização de tarefas comuns                    |
-
-### Ordem de Desenvolvimento Recomendada
-
-Para o AskWise, a ordem sugerida é bottom-up (infraestrutura → negócio → interface):
+### O Problema: IA sem Spec
 
 ```
-Fase 1: Infraestrutura
-├── internal/storage    (SQLite)
-├── internal/vectorstore (Qdrant client)
-├── internal/embedding   (OpenAI embeddings)
-└── internal/llm         (OpenAI chat)
+Você: "Cria um sistema de upload de arquivos em Go"
 
-Fase 2: Lógica de Negócio
-├── internal/document    (parsers de arquivos)
-├── internal/chunker     (divisão de texto)
-├── internal/retriever   (busca de contexto)
-└── internal/rag         (orquestrador)
-
-Fase 3: Interfaces
-├── cmd/server           (API HTTP)
-└── cmd/chat             (CLI terminal)
+IA: *gera código genérico*
+    *inventa nomes de variáveis*
+    *escolhe bibliotecas arbitrárias*
+    *não segue nenhum padrão*
+    *cada pergunta gera código inconsistente com o anterior*
 ```
 
-### Boas Práticas no Desenvolvimento
+Resultado: código fragmentado, sem coesão, que você precisa reescrever.
 
-- **Implemente uma interface de cada vez**: Comece pelo storage, depois embedding, etc.
-- **Teste isoladamente**: Cada componente deve funcionar independente
-- **Commits frequentes**: Um commit por componente implementado
-- **Código comentado**: Este é um projeto educativo, comente generosamente
-- **Siga o Design**: Não invente coisas que não estão no design
-
-## 6. Fluxo SDD na Prática
+### A Solução: IA Dirigida por Spec
 
 ```
-                    ┌─────────────┐
-                    │  IDEIA      │
-                    │  "Quero um  │
-                    │  chatbot    │
-                    │  de suporte"│
-                    └──────┬──────┘
-                           │
-                    ┌──────▼──────┐
-                    │    SPEC     │  ← Estamos aqui no AskWise!
-                    │             │
-                    │ Requisitos  │  📄 01-VISAO-GERAL.md
-                    │ Regras      │  📄 02-CENARIO-NEGOCIO.md
-                    │ Cenário     │  📄 03-REQUISITOS.md
-                    │             │  📄 04-REGRAS-NEGOCIO.md
-                    └──────┬──────┘
-                           │
-                    ┌──────▼──────┐
-                    │   DESIGN    │
-                    │             │
-                    │ Arquitetura │  📄 01-ARQUITETURA.md
-                    │ Dados       │  📄 02-MODELO-DADOS.md
-                    │ API         │  📄 03-API-DESIGN.md
-                    └──────┬──────┘
-                           │
-                    ┌──────▼──────┐
-                    │ DEVELOPMENT │
-                    │             │
-                    │ Código      │  📦 internal/...
-                    │ Testes      │  📦 cmd/...
-                    │ Docs        │  📦 docker-compose.yml
-                    └──────┬──────┘
-                           │
-                    ┌──────▼──────┐
-                    │  ENTREGA    │
-                    │             │
-                    │  Sistema    │
-                    │  funcional  │
-                    └─────────────┘
+Você: "Implemente o internal/chunker seguindo:
+       - Spec: docs/spec/03-REQUISITOS.md (RF-03)
+       - Spec: docs/spec/04-REGRAS-NEGOCIO.md (RN-06 a RN-09)
+       - Design: docs/design/01-ARQUITETURA.md (seção 2.4)"
+
+IA: *lê os documentos referenciados*
+    *entende chunk_size=500, overlap=50*
+    *vê a interface Chunker definida*
+    *sabe os separadores: \n\n, \n, ". ", " "*
+    *implementa EXATAMENTE o que foi especificado*
 ```
 
-## 7. SDD vs Outras Metodologias
+Resultado: código preciso, consistente, rastreável à spec.
 
-| Aspecto              | SDD              | Agile/Scrum       | Waterfall         |
-|----------------------|------------------|-------------------|-------------------|
-| Documentação upfront | Sim (Spec+Design)| Mínima            | Extensiva         |
-| Iterações            | Por fase         | Sprints curtos    | Uma grande fase   |
-| Flexibilidade        | Média            | Alta              | Baixa             |
-| Adequado para IA     | Excelente        | Razoável          | Razoável          |
-| Complexidade         | Baixa            | Média             | Alta              |
-| Ideal para           | PoCs, MVPs, times pequenos | Produtos em evolução | Sistemas críticos |
+### A Diferença em Números
 
-## 8. Dicas para Aplicar SDD
+| Métrica                         | Sem SDD | Com SDD  |
+|---------------------------------|---------|----------|
+| Iterações até código correto    | 5-10    | 1-2      |
+| Consistência entre componentes  | Baixa   | Alta     |
+| Retrabalho                      | 60%     | 10%      |
+| Tempo para onboarding de novo dev/IA | Alto | Baixo |
+| Código alinhado com requisitos  | ~40%    | ~95%     |
 
-1. **Não pule fases**: A tentação de "ir direto pro código" é grande, mas gera retrabalho
-2. **Spec não precisa ser perfeita**: 80% definido é suficiente para começar o Design
-3. **Design evolui**: É normal ajustar o design durante o desenvolvimento
-4. **Use Markdown**: Documentos simples, versionados no Git, legíveis por humanos e IAs
-5. **Referência cruzada**: RF-01 no código referencia RF-01 na spec
-6. **Mantenha atualizado**: Se o código mudar, atualize spec e design
+## 3. Os Pilares do SDD
 
-## 9. Como SDD Funciona com Cursor/IA
+### Pilar 1: Spec como Fonte Única de Verdade
+
+Tudo começa e termina na spec. Ela contém:
+
+| Documento                | O que Define                              | Quem Consulta       |
+|--------------------------|-------------------------------------------|----------------------|
+| Visão Geral              | Problema, solução, escopo, métricas       | Todos                |
+| Cenário de Negócio       | Contexto real, personas, jornadas         | Todos                |
+| Requisitos (RF/RNF)      | O que o sistema faz e como se comporta    | Devs, IA             |
+| Regras de Negócio (RN)   | Lógica obrigatória do sistema             | Devs, IA             |
+| Arquitetura              | Componentes, interfaces, fluxos           | Devs, IA             |
+| Modelo de Dados          | Tabelas, structs, relacionamentos         | Devs, IA             |
+| API Design               | Endpoints, payloads, contratos            | Devs, IA, Frontend   |
+
+### Pilar 2: Rastreabilidade (Spec → Código)
+
+Cada linha de código deve ser **rastreável** a um item da spec:
+
+```go
+// RF-03 + RN-06: Divide o texto em chunks de ~500 tokens com overlap de ~50 tokens.
+// A estratégia de chunking recursivo preserva a estrutura semântica do texto,
+// tentando quebrar primeiro por parágrafos, depois por linhas, frases e palavras.
+func (c *RecursiveChunker) Chunk(doc *Document) ([]Chunk, error) {
+    // RN-07: Overlap entre chunks para preservar contexto nas fronteiras
+    // RN-09: Separadores específicos por formato de arquivo
+    ...
+}
+```
+
+Isso permite:
+- Saber **por que** cada código existe
+- Verificar se a implementação está **completa** (todos os RFs implementados?)
+- A IA entender o **propósito** do código ao ler os comentários
+
+### Pilar 3: Spec Dirige a IA
+
+A spec funciona como **prompt engineering estruturado** para agentes de IA:
 
 ```
-┌──────────────────────────────────────────────────────────┐
-│                                                          │
-│  Você: "Implemente o internal/chunker seguindo           │
-│         a spec (03-REQUISITOS.md, RN-06 a RN-09)        │
-│         e o design (01-ARQUITETURA.md, seção 2.4)"       │
-│                                                          │
-│  IA: *lê os documentos referenciados*                    │
-│      *entende chunk_size=500, overlap=50*                │
-│      *vê a interface Chunker definida*                   │
-│      *implementa exatamente o que foi especificado*      │
-│                                                          │
-└──────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────┐
+│  Spec Documents (instruções para a IA)           │
+│                                                  │
+│  "O chunker deve ter chunks de 500 tokens"       │──▶ IA gera chunker com 500 tokens
+│  "Overlap de 50 tokens entre chunks"             │──▶ IA implementa overlap de 50
+│  "Interface: Chunk(doc) ([]Chunk, error)"        │──▶ IA segue a interface definida
+│  "Formatos: PDF, CSV, TXT, YAML, JSON, MD"      │──▶ IA cria parser para cada formato
+│                                                  │
+└─────────────────────────────────────────────────┘
 ```
 
-Os documentos SDD servem como **instruções precisas** para a IA, resultando em
-código muito mais alinhado com o que você realmente precisa.
+## 4. Fluxo SDD na Prática
+
+### Etapa 1: Escrever a Spec
+
+Antes de qualquer código, documente tudo que o sistema precisa ser:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  SPEC (docs/spec/)                                           │
+│                                                              │
+│  📄 01-VISAO-GERAL.md      Propósito, problema, escopo      │
+│  📄 02-CENARIO-NEGOCIO.md  Personas, jornadas, contexto     │
+│  📄 03-REQUISITOS.md       RF-01..RF-09, RNF-01..RNF-06     │
+│  📄 04-REGRAS-NEGOCIO.md   RN-01..RN-22                     │
+│                                                              │
+│  📄 design/01-ARQUITETURA.md   Componentes e interfaces     │
+│  📄 design/02-MODELO-DADOS.md  Tabelas, structs, schemas    │
+│  📄 design/03-API-DESIGN.md    Endpoints e contratos        │
+│                                                              │
+└───────────────────────────┬─────────────────────────────────┘
+                            │
+                     A spec está pronta.
+                     Agora ela DIRIGE tudo.
+                            │
+                            ▼
+```
+
+### Etapa 2: Desenvolver Dirigido pela Spec
+
+O desenvolvimento acontece **sempre referenciando a spec**:
+
+```
+                            │
+           ┌────────────────┼────────────────┐
+           │                │                │
+           ▼                ▼                ▼
+    ┌──────────────┐ ┌──────────────┐ ┌──────────────┐
+    │  Componente  │ │  Componente  │ │  Componente  │
+    │  storage     │ │  chunker     │ │  retriever   │
+    │              │ │              │ │              │
+    │  Dirigido por│ │  Dirigido por│ │  Dirigido por│
+    │  02-MODELO   │ │  RF-03       │ │  RN-10..12   │
+    │  RN-21..22   │ │  RN-06..09   │ │  01-ARQUIT.  │
+    └──────────────┘ └──────────────┘ └──────────────┘
+```
+
+Cada componente sabe **exatamente** quais documentos da spec o dirigem.
+
+### Etapa 3: Validar contra a Spec
+
+Ao finalizar, a spec serve como **checklist de validação**:
+
+- [ ] RF-01 (Upload) → Implementado em `cmd/server`?
+- [ ] RF-03 (Chunking) → Implementado em `internal/chunker`?
+- [ ] RN-06 (Chunk size 500) → Configurável e testado?
+- [ ] RN-11 (Score >= 0.5) → Filtro aplicado no retriever?
+- [ ] RN-13 (Resposta baseada em contexto) → System prompt correto?
+
+## 5. SDD vs Outras Metodologias
+
+| Aspecto                  | SDD                     | Agile/Scrum              | Waterfall                |
+|--------------------------|-------------------------|--------------------------|--------------------------|
+| Filosofia                | Spec dirige tudo        | Iteração contínua        | Fases sequenciais rígidas|
+| Documentação             | Essencial e viva        | Mínima e descartável     | Extensiva e pesada       |
+| Papel da spec            | Motor do desenvolvimento| Backlog de user stories  | Documento de requisitos  |
+| Adequado para IA         | Excelente               | Razoável                 | Razoável                 |
+| Flexibilidade            | Spec evolui com o código| Alta                     | Baixa                    |
+| Complexidade do processo | Baixa                   | Média                    | Alta                     |
+| Ideal para               | PoCs, MVPs, dev com IA  | Produtos em evolução     | Sistemas críticos        |
+
+### Por que SDD supera as outras com IA?
+
+- **Agile**: User stories são vagas demais para a IA ("Como usuário, quero fazer upload").
+  A IA precisa de **especificações técnicas precisas**, não narrativas.
+- **Waterfall**: Documentação pesada demais, separada do código, desatualizada rapidamente.
+  SDD mantém a spec **viva e próxima do código**.
+- **SDD**: Specs detalhadas em Markdown, versionadas no Git, legíveis por humanos e IAs.
+  A IA lê a spec e gera código preciso. O humano valida contra a mesma spec.
+
+## 6. Dicas para Aplicar SDD
+
+### Para Humanos
+
+1. **Não pule a spec**: A tentação de "ir direto pro código" é grande, mas gera retrabalho
+2. **80% é suficiente**: A spec não precisa ser perfeita para começar — ela evolui
+3. **Numere tudo**: RF-01, RN-01, RNF-01 — facilita referência cruzada no código
+4. **Markdown no Git**: Specs versionadas junto com o código, sempre atualizadas
+5. **Referência cruzada**: Comentários no código apontam para itens da spec
+
+### Para Agentes de IA
+
+1. **Sempre referencie a spec**: "Implemente seguindo RF-03 e RN-06 a RN-09"
+2. **Inclua os arquivos**: Dê à IA acesso aos documentos da spec como contexto
+3. **Valide o output**: Compare o código gerado com o que a spec pede
+4. **Itere na spec, não no código**: Se o resultado não ficou bom, melhore a spec primeiro
+5. **Use AGENTS.md**: Centralize instruções para a IA sobre como usar a spec
+
+### Regra de Ouro
+
+> **Se a IA gera código que não segue a spec, o problema está na spec, não na IA.**
+>
+> Melhore a spec → IA gera código melhor → Todos ganham.
+
+## 7. SDD no Contexto de RAG
+
+O AskWise é um projeto que aplica SDD para construir um sistema RAG. Veja como os
+conceitos se conectam:
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│                        SDD + RAG                                  │
+│                                                                   │
+│  A SPEC define:                    O RAG implementa:              │
+│                                                                   │
+│  RF-03: Chunking                   → internal/chunker             │
+│  RF-04: Embeddings                 → internal/embedding           │
+│  RF-05: Vector store               → internal/vectorstore         │
+│  RF-07: Pipeline RAG               → internal/rag                 │
+│  RN-10..12: Retrieval              → internal/retriever           │
+│  RN-13..17: Generation             → internal/llm                 │
+│                                                                   │
+│  Cada componente do RAG é DIRIGIDO por um item da spec.           │
+│  Nada é inventado. Tudo é rastreável.                             │
+│                                                                   │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+Isso garante que o pipeline RAG não é implementado "no feeling", mas sim seguindo
+especificações precisas de tamanho de chunk, score mínimo, número de resultados, tom da
+resposta, etc.
+
+## 8. Checklist SDD
+
+### Antes de Codificar
+- [ ] A spec está escrita e revisada?
+- [ ] Requisitos funcionais cobrem todos os casos?
+- [ ] Regras de negócio são claras e sem ambiguidade?
+- [ ] Arquitetura e interfaces estão definidas?
+- [ ] Modelo de dados e API estão documentados?
+- [ ] AGENTS.md está configurado para orientar a IA?
+
+### Durante o Desenvolvimento
+- [ ] Cada componente referencia itens da spec nos comentários?
+- [ ] A implementação segue as interfaces definidas na spec?
+- [ ] Decisões que divergem da spec estão documentadas e justificadas?
+
+### Após o Desenvolvimento
+- [ ] Todos os RFs estão implementados?
+- [ ] Todas as RNs estão respeitadas?
+- [ ] Os RNFs estão sendo atendidos (performance, logs, etc.)?
+- [ ] A spec foi atualizada com mudanças feitas durante o desenvolvimento?
+
+## 9. Leitura Adicional
+
+- [Spec-Driven Development: The Future of AI-Assisted Coding](https://www.cursor.com/blog) — Conceito aplicado a dev com IA
+- [Documentation-Driven Development](https://gist.github.com/zsup/9434452) — Abordagem similar focada em docs
+- [README Driven Development](https://tom.preston-werner.com/2010/08/23/readme-driven-development.html) — Tom Preston-Werner (GitHub)
+- [Design Docs at Google](https://www.industrialempathy.com/posts/design-docs-at-google/) — Como Google usa docs para dirigir o dev
