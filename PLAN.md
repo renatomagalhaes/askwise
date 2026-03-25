@@ -21,7 +21,7 @@ CLI Chat ◀── API Server ◀── RAG Pipeline ◀────────
 | 3     | AI Integration    | Embeddings + LLM via OpenAI com testes         | `done`      |
 | 4     | RAG Pipeline      | Pipeline completo: ingest + query              | `done`      |
 | 5     | API Server        | API REST funcional com todos os endpoints      | `done`      |
-| 6     | CLI Chat          | Chat no terminal, end-to-end funcional         | `pending`   |
+| 6     | CLI Chat          | Chat no terminal, end-to-end funcional         | `done`      |
 
 ---
 
@@ -248,14 +248,14 @@ respostas baseadas nos documentos enviados, com fontes citadas.
 
 ### Tarefas
 
-- [ ] **6.1** — `cmd/chat/` — Loop principal de leitura (bufio.Scanner)
-- [ ] **6.2** — `cmd/chat/` — Comandos especiais: /help, /clear, /quit, /exit, /sources, /stats
-- [ ] **6.3** — `cmd/chat/` — Integração com RAG.Query()
-- [ ] **6.4** — `cmd/chat/` — Exibição formatada: resposta + fontes (RN-14)
-- [ ] **6.5** — `cmd/chat/` — Histórico da conversa em memória (RN-18, últimas 10 msgs)
-- [ ] **6.6** — `cmd/chat/` — Feedback visual: spinners/mensagens de progresso (RN-20)
-- [ ] **6.7** — Teste end-to-end: upload documento via API → chat pergunta → resposta correta
-- [ ] **6.8** — Documentos de exemplo para teste (TechSupport Ltda.)
+- [x] **6.1** — `cmd/chat/` — Loop principal de leitura (bufio.Scanner)
+- [x] **6.2** — `cmd/chat/` — Comandos especiais: /help, /clear, /quit, /exit, /sources, /stats
+- [x] **6.3** — `cmd/chat/` — Integração com RAG.Query()
+- [x] **6.4** — `cmd/chat/` — Exibição formatada: resposta + fontes (RN-14)
+- [x] **6.5** — `cmd/chat/` — Histórico da conversa em memória (RN-18, últimas 10 msgs)
+- [x] **6.6** — `cmd/chat/` — Feedback visual: spinners/mensagens de progresso (RN-20)
+- [x] **6.7** — Teste end-to-end: upload documento via API → chat pergunta → resposta correta
+- [x] **6.8** — Documentos de exemplo para teste (TechSupport Ltda.)
 
 ### Critério de Aceite
 
