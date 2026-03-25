@@ -20,7 +20,7 @@ CLI Chat ◀── API Server ◀── RAG Pipeline ◀────────
 | 2     | Doc Processing    | Upload → Parse → Chunk funcional com testes    | `done`      |
 | 3     | AI Integration    | Embeddings + LLM via OpenAI com testes         | `done`      |
 | 4     | RAG Pipeline      | Pipeline completo: ingest + query              | `done`      |
-| 5     | API Server        | API REST funcional com todos os endpoints      | `pending`   |
+| 5     | API Server        | API REST funcional com todos os endpoints      | `done`      |
 | 6     | CLI Chat          | Chat no terminal, end-to-end funcional         | `pending`   |
 
 ---
@@ -209,17 +209,17 @@ design/03-API-DESIGN.md
 
 ### Tarefas
 
-- [ ] **5.1** — `cmd/server/` — Setup do servidor HTTP (net/http)
-- [ ] **5.2** — `cmd/server/` — Middleware: Logger JSON, Recovery, MaxFileSize
-- [ ] **5.3** — `cmd/server/` — `POST /api/v1/documents` (upload + ingest pipeline)
+- [x] **5.1** — `cmd/server/` — Setup do servidor HTTP (net/http)
+- [x] **5.2** — `cmd/server/` — Middleware: Logger JSON, Recovery, MaxFileSize
+- [x] **5.3** — `cmd/server/` — `POST /api/v1/documents` (upload + ingest pipeline)
   - Validação: formato (RN-01), tamanho (RN-02), conteúdo (RN-03)
   - Duplicatas (RN-04), sanitização (RN-05)
-- [ ] **5.4** — `cmd/server/` — `GET /api/v1/documents` (listagem)
-- [ ] **5.5** — `cmd/server/` — `GET /api/v1/documents/:id` (detalhes)
-- [ ] **5.6** — `cmd/server/` — `DELETE /api/v1/documents/:id` (remoção + RN-21)
-- [ ] **5.7** — `cmd/server/` — `GET /api/v1/health` (completo, verifica dependências)
-- [ ] **5.8** — OpenAPI spec finalizada (`api/openapi.yaml`)
-- [ ] **5.9** — Testes de integração da API (HTTP test)
+- [x] **5.4** — `cmd/server/` — `GET /api/v1/documents` (listagem)
+- [x] **5.5** — `cmd/server/` — `GET /api/v1/documents/:id` (detalhes)
+- [x] **5.6** — `cmd/server/` — `DELETE /api/v1/documents/:id` (remoção + RN-21)
+- [x] **5.7** — `cmd/server/` — `GET /api/v1/health` (completo, verifica dependências)
+- [x] **5.8** — OpenAPI spec finalizada (`api/openapi.yaml`)
+- [x] **5.9** — Testes de integração da API (HTTP test)
 
 ### Critério de Aceite
 

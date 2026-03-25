@@ -13,29 +13,36 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
+	"context"
 	"log/slog"
 	"net/http"
 	"os"
 	"time"
 
+	"github.com/renatomagalhaes/askwise/internal/chunker"
 	"github.com/renatomagalhaes/askwise/internal/config"
+	"github.com/renatomagalhaes/askwise/internal/document"
+	"github.com/renatomagalhaes/askwise/internal/embedding"
+	"github.com/renatomagalhaes/askwise/internal/llm"
 	"github.com/renatomagalhaes/askwise/internal/logger"
+	"github.com/renatomagalhaes/askwise/internal/rag"
+	"github.com/renatomagalhaes/askwise/internal/retriever"
+	"github.com/renatomagalhaes/askwise/internal/storage"
+	"github.com/renatomagalhaes/askwise/internal/vectorstore"
 )
 
 // version é a versão da API, exibida no health check.
 const version = "0.1.0"
 
+// embeddingDimension é o tamanho dos vetores do text-embedding-3-small.
+const embeddingDimension = 1536
+
 func main() {
-	// ADR-002: Configura o logger global como JSON estruturado.
-	// A partir daqui, qualquer uso de slog.Info(), slog.Error() etc.
-	// em qualquer parte do código emite JSON para STDOUT.
+	// ADR-002: Logger global JSON estruturado.
 	logger.SetDefault("server")
 
-	// Carrega configuração das variáveis de ambiente.
-	// LoadOrWarn não falha se OPENAI_API_KEY estiver ausente — permite
-	// que o servidor suba mesmo sem a key (útil para health check e debug).
+	// Carrega configuração. LoadOrWarn não falha se OPENAI_API_KEY estiver ausente
+	// — permite que o servidor suba para health check e debug.
 	cfg := config.LoadOrWarn()
 
 	slog.Info("configuration loaded",
@@ -45,20 +52,16 @@ func main() {
 		"openai_configured", cfg.OpenAIConfigured(),
 	)
 
-	// Cria o roteador HTTP.
-	// Go 1.22+ suporta pattern matching no ServeMux: "GET /path" restringe ao método.
+	app := initApp(cfg)
+	defer app.storage.Close()
+
 	mux := http.NewServeMux()
+	registerRoutes(mux, app)
 
-	// Registra os endpoints da API.
-	// Spec: design/03-API-DESIGN.md
-	mux.HandleFunc("GET /api/v1/health", handleHealth(cfg))
-
-	// Monta o pipeline de middleware.
-	// Cada middleware envolve o handler anterior, formando uma cadeia:
-	//   Request → Logger → Recovery → Handler → Response
+	// Pipeline de middleware:
+	//   Request → Recovery → Logger → Handler → Response
 	handler := withRecovery(withRequestLogger(mux))
 
-	// Inicia o servidor HTTP.
 	addr := cfg.ServerAddr()
 	slog.Info("server starting", "addr", addr, "version", version)
 
@@ -66,7 +69,7 @@ func main() {
 		Addr:         addr,
 		Handler:      handler,
 		ReadTimeout:  30 * time.Second,
-		WriteTimeout: 60 * time.Second,
+		WriteTimeout: 120 * time.Second,
 		IdleTimeout:  120 * time.Second,
 	}
 
@@ -76,136 +79,69 @@ func main() {
 	}
 }
 
-// --- Handlers ---
+// initApp cria o App com todos os componentes inicializados.
+func initApp(cfg *config.Config) *App {
+	ctx := context.Background()
 
-// healthResponse é a estrutura da resposta do health check,
-// conforme definido em api/openapi.yaml (HealthResponse).
-type healthResponse struct {
-	Status       string            `json:"status"`
-	Version      string            `json:"version"`
-	Dependencies map[string]string `json:"dependencies"`
-}
-
-// handleHealth retorna um handler para GET /api/v1/health.
-// Verifica o status de cada dependência e retorna o resultado.
-//
-// Spec: design/03-API-DESIGN.md §2.1
-func handleHealth(cfg *config.Config) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		// Verifica cada dependência
-		qdrantStatus := checkQdrant(cfg)
-		sqliteStatus := "connected" // SQLite auto-cria na inicialização (storage.NewSQLite)
-		openaiStatus := "not_configured"
-		if cfg.OpenAIConfigured() {
-			openaiStatus = "configured"
-		}
-
-		// Determina status geral: healthy se todas as dependências críticas estão ok
-		status := "healthy"
-		httpCode := http.StatusOK
-		if qdrantStatus != "connected" {
-			status = "unhealthy"
-			httpCode = http.StatusServiceUnavailable
-		}
-
-		resp := healthResponse{
-			Status:  status,
-			Version: version,
-			Dependencies: map[string]string{
-				"qdrant": qdrantStatus,
-				"sqlite": sqliteStatus,
-				"openai": openaiStatus,
-			},
-		}
-
-		writeJSON(w, httpCode, resp)
-	}
-}
-
-// checkQdrant verifica se o Qdrant está acessível fazendo um GET /healthz.
-func checkQdrant(cfg *config.Config) string {
-	url := fmt.Sprintf("http://%s/healthz", cfg.QdrantAddr())
-
-	client := &http.Client{Timeout: 2 * time.Second}
-	resp, err := client.Get(url)
+	// ADR-003: SQLite para metadados de documentos.
+	store, err := storage.NewSQLite(cfg.SQLitePath)
 	if err != nil {
-		slog.Debug("qdrant health check failed", "error", err, "url", url)
-		return "disconnected"
+		slog.Error("failed to initialize SQLite", "error", err, "path", cfg.SQLitePath)
+		os.Exit(1)
 	}
-	defer resp.Body.Close()
+	slog.Info("sqlite initialized", "path", cfg.SQLitePath)
 
-	if resp.StatusCode == http.StatusOK {
-		return "connected"
-	}
-	return "disconnected"
-}
-
-// --- Middleware ---
-
-// withRequestLogger é um middleware que registra cada request HTTP em JSON.
-// ADR-002: Logs estruturados com campos contextuais.
-func withRequestLogger(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		start := time.Now()
-
-		// responseWriter wrapper para capturar o status code
-		rw := &responseWriter{ResponseWriter: w, statusCode: http.StatusOK}
-
-		next.ServeHTTP(rw, r)
-
-		slog.Info("http request",
-			"method", r.Method,
-			"path", r.URL.Path,
-			"status", rw.statusCode,
-			"duration_ms", time.Since(start).Milliseconds(),
-			"remote_addr", r.RemoteAddr,
+	// ADR-004: Qdrant como vector store.
+	vs := vectorstore.NewQdrant(cfg.QdrantAddr())
+	if err := vs.EnsureCollection(ctx, cfg.QdrantCollection, embeddingDimension); err != nil {
+		slog.Warn("qdrant collection setup failed (will retry on first request)",
+			"error", err,
+			"collection", cfg.QdrantCollection,
 		)
-	})
-}
-
-// withRecovery é um middleware que captura panics e retorna HTTP 500.
-// Evita que um panic derrube o servidor inteiro.
-func withRecovery(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		defer func() {
-			if err := recover(); err != nil {
-				slog.Error("panic recovered",
-					"error", fmt.Sprintf("%v", err),
-					"method", r.Method,
-					"path", r.URL.Path,
-				)
-				writeJSON(w, http.StatusInternalServerError, map[string]string{
-					"error":   "internal_error",
-					"message": "Erro interno do servidor",
-				})
-			}
-		}()
-		next.ServeHTTP(w, r)
-	})
-}
-
-// --- Helpers ---
-
-// responseWriter é um wrapper de http.ResponseWriter que captura o status code
-// escrito, permitindo logar o status no middleware de request logging.
-type responseWriter struct {
-	http.ResponseWriter
-	statusCode int
-}
-
-// WriteHeader captura o status code antes de delegar ao ResponseWriter real.
-func (rw *responseWriter) WriteHeader(code int) {
-	rw.statusCode = code
-	rw.ResponseWriter.WriteHeader(code)
-}
-
-// writeJSON serializa um valor como JSON e escreve na response.
-// Define Content-Type como application/json e o status code fornecido.
-func writeJSON(w http.ResponseWriter, code int, data any) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(code)
-
-	if err := json.NewEncoder(w).Encode(data); err != nil {
-		slog.Error("failed to encode JSON response", "error", err)
 	}
+
+	// ADR-005: OpenAI como provider de embeddings e LLM.
+	embedder := embedding.NewOpenAIEmbedder(cfg.OpenAIAPIKey, cfg.OpenAIEmbeddingModel)
+	llmClient := llm.NewOpenAILLM(cfg.OpenAIAPIKey, cfg.OpenAIChatModel)
+
+	registry := document.NewRegistry()
+	chk := chunker.NewRecursiveChunker(cfg.RAGChunkSize, cfg.RAGChunkOverlap)
+
+	ret := retriever.NewSemanticRetriever(
+		embedder, vs, cfg.QdrantCollection, float32(cfg.RAGScoreThreshold),
+	)
+
+	ragOrchestrator := rag.NewRAG(
+		registry, chk, embedder, vs, ret, llmClient, store,
+		rag.Config{Collection: cfg.QdrantCollection},
+	)
+
+	slog.Info("all components initialized",
+		"collection", cfg.QdrantCollection,
+		"chunk_size", cfg.RAGChunkSize,
+		"chunk_overlap", cfg.RAGChunkOverlap,
+		"top_k", cfg.RAGTopK,
+		"score_threshold", cfg.RAGScoreThreshold,
+	)
+
+	return &App{
+		rag:      ragOrchestrator,
+		storage:  store,
+		registry: registry,
+		cfg:      cfg,
+	}
+}
+
+// registerRoutes configura todas as rotas da API.
+// Go 1.22+: pattern "METHOD /path" restringe ao método HTTP.
+// Spec: design/03-API-DESIGN.md
+func registerRoutes(mux *http.ServeMux, app *App) {
+	mux.HandleFunc("GET /api/v1/health", app.handleHealth())
+	mux.HandleFunc("GET /api/v1/documents", app.handleListDocuments())
+	mux.HandleFunc("GET /api/v1/documents/{id}", app.handleGetDocument())
+	mux.HandleFunc("DELETE /api/v1/documents/{id}", app.handleDeleteDocument())
+
+	// RN-02: Aplica limite de tamanho apenas na rota de upload.
+	uploadHandler := withMaxFileSize(app.cfg.MaxFileSize, http.HandlerFunc(app.handleUpload()))
+	mux.Handle("POST /api/v1/documents", uploadHandler)
 }
