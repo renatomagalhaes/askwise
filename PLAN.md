@@ -15,7 +15,7 @@ CLI Chat ◀── API Server ◀── RAG Pipeline ◀────────
 
 | Etapa | Nome              | Entregável                                    | Status      |
 |-------|-------------------|-----------------------------------------------|-------------|
-| 0     | Foundation        | Projeto compila e roda via Docker              | `pending`   |
+| 0     | Foundation        | Projeto compila e roda via Docker              | `done`      |
 | 1     | Data Layer        | SQLite + Qdrant funcionais com testes          | `pending`   |
 | 2     | Doc Processing    | Upload → Parse → Chunk funcional com testes    | `pending`   |
 | 3     | AI Integration    | Embeddings + LLM via OpenAI com testes         | `pending`   |
@@ -35,16 +35,16 @@ Nenhum Go precisa estar instalado localmente.
 
 ### Tarefas
 
-- [ ] **0.1** — `Dockerfile` multi-stage (build + runtime)
-- [ ] **0.2** — `docker-compose.yml` com services: `app`, `chat`, `qdrant`
-- [ ] **0.3** — `Makefile` com targets: build, test, run, lint, chat, logs, clean
-- [ ] **0.4** — `go.mod` + `go.sum` inicializados (dentro do container)
-- [ ] **0.5** — `internal/config/` — Carregamento de variáveis de ambiente
-- [ ] **0.6** — `internal/logger/` — Logger estruturado JSON (STDOUT/STDERR)
-- [ ] **0.7** — Health check básico (`GET /api/v1/health` retorna 200)
-- [ ] **0.8** — ADR-001: Docker-first (sem Go local)
-- [ ] **0.9** — ADR-002: Logs estruturados JSON
-- [ ] **0.10** — OpenAPI spec inicial (`api/openapi.yaml`)
+- [x] **0.1** — `Dockerfile` multi-stage (build + runtime)
+- [x] **0.2** — `docker-compose.yml` com services: `app`, `chat`, `qdrant`
+- [x] **0.3** — `Makefile` com targets: build, test, run, lint, chat, logs, clean
+- [x] **0.4** — `go.mod` + `go.sum` inicializados (dentro do container)
+- [x] **0.5** — `internal/config/` — Carregamento de variáveis de ambiente
+- [x] **0.6** — `internal/logger/` — Logger estruturado JSON (STDOUT/STDERR)
+- [x] **0.7** — Health check básico (`GET /api/v1/health` retorna 200)
+- [x] **0.8** — ADR-001: Docker-first (sem Go local)
+- [x] **0.9** — ADR-002: Logs estruturados JSON
+- [x] **0.10** — OpenAPI spec inicial (`api/openapi.yaml`)
 
 ### Critério de Aceite
 
