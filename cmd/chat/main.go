@@ -15,6 +15,7 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"io"
 	"log/slog"
 	"os"
 	"strings"
@@ -41,9 +42,22 @@ const maxHistoryMessages = 10
 // embeddingDimension é o tamanho dos vetores do text-embedding-3-small.
 const embeddingDimension = 1536
 
+// Cores ANSI para o terminal.
+const (
+	colorReset  = "\033[0m"
+	colorBold   = "\033[1m"
+	colorCyan   = "\033[36m"
+	colorGreen  = "\033[32m"
+	colorGray   = "\033[90m"
+	colorYellow = "\033[33m"
+	colorBlue   = "\033[34m"
+	colorMagenta = "\033[35m"
+)
+
 func main() {
-	// Redireciona logs para STDERR para não misturar com output do chat.
-	logger.SetDefault("chat")
+	// No chat CLI, silenciamos os logs no STDOUT/STDERR para não poluir a interface.
+	// RF-06, RN-20: O feedback para o usuário é feito via print/spinner, não logs.
+	logger.SetDefaultCustom("chat", io.Discard, slog.LevelInfo)
 
 	cfg, err := config.Load()
 	if err != nil {
@@ -97,12 +111,12 @@ func initComponents(cfg *config.Config) (*rag.RAG, storage.Storage) {
 // printBanner exibe o cabeçalho do chat.
 func printBanner() {
 	fmt.Println()
-	fmt.Println("  ╔══════════════════════════════════════════════╗")
-	fmt.Println("  ║          AskWise Chat v" + version + "                 ║")
-	fmt.Println("  ╠══════════════════════════════════════════════╣")
-	fmt.Println("  ║  Pergunte sobre os documentos da sua base.  ║")
-	fmt.Println("  ║  Digite /help para ver os comandos.         ║")
-	fmt.Println("  ╚══════════════════════════════════════════════╝")
+	fmt.Printf("  %s╔══════════════════════════════════════════════╗%s\n", colorYellow, colorReset)
+	fmt.Printf("  %s║%s          %sAskWise Chat v%s%-11s%s  %s║%s\n", colorYellow, colorReset, colorBold, version, "", colorReset, colorYellow, colorReset)
+	fmt.Printf("  %s╠══════════════════════════════════════════════╣%s\n", colorYellow, colorReset)
+	fmt.Printf("  %s║%s  Pergunte sobre os documentos da sua base.  %s║%s\n", colorYellow, colorReset, colorYellow, colorReset)
+	fmt.Printf("  %s║%s  Digite %s/help%s para ver os comandos.         %s║%s\n", colorYellow, colorReset, colorCyan, colorReset, colorYellow, colorReset)
+	fmt.Printf("  %s╚══════════════════════════════════════════════╝%s\n", colorYellow, colorReset)
 	fmt.Println()
 }
 
@@ -117,7 +131,7 @@ func runLoop(ragOrch *rag.RAG, store storage.Storage, cfg *config.Config) {
 	ctx := context.Background()
 
 	for {
-		fmt.Print("  você> ")
+		fmt.Printf("  %s%svocê>%s ", colorBlue, colorBold, colorReset)
 
 		if !scanner.Scan() {
 			// EOF (Ctrl+D) ou erro de leitura.
@@ -216,29 +230,29 @@ func queryRAG(ctx context.Context, ragOrch *rag.RAG, question string, history []
 	return response
 }
 
-// printResponse exibe a resposta e as fontes de forma formatada.
+// printResponse exibe a resposta e as fontes de forma formatada e colorida.
 // RN-14: Citação de fontes ao final da resposta.
 func printResponse(resp *rag.QueryResponse) {
-	fmt.Println("  ──────────────────────────────────────────────")
+	fmt.Printf("  %s──────────────────────────────────────────────%s\n", colorGray, colorReset)
 	fmt.Println()
 
-	// Indenta cada linha da resposta para alinhamento visual.
+	// Indenta cada linha da resposta para alinhamento visual e usa cor Ciano.
 	lines := strings.Split(resp.Answer, "\n")
 	for _, line := range lines {
-		fmt.Printf("  %s\n", line)
+		fmt.Printf("  %s%s%s\n", colorCyan, line, colorReset)
 	}
 
-	// RN-14: Lista fontes.
+	// RN-14: Lista fontes em cor escura/cinza.
 	if len(resp.Sources) > 0 {
 		fmt.Println()
-		fmt.Println("  📎 Fontes:")
+		fmt.Printf("  %s📎 Fontes:%s\n", colorBold, colorReset)
 		for _, s := range resp.Sources {
-			fmt.Printf("     • %s (relevância: %.0f%%)\n", s.FileName, s.Score*100)
+			fmt.Printf("     %s• %-30s (relevância: %.0f%%)%s\n", colorGray, s.FileName, s.Score*100, colorReset)
 		}
 	}
 
 	fmt.Println()
-	fmt.Println("  ──────────────────────────────────────────────")
+	fmt.Printf("  %s──────────────────────────────────────────────%s\n", colorGray, colorReset)
 	fmt.Println()
 }
 
@@ -262,14 +276,14 @@ func appendToHistory(history []llmpkg.Message, question, answer string) []llmpkg
 
 func printHelp() {
 	fmt.Println()
-	fmt.Println("  📖 Comandos disponíveis:")
+	fmt.Printf("  %s📖 Comandos disponíveis:%s\n", colorBold, colorReset)
 	fmt.Println()
-	fmt.Println("     /help       Mostra esta mensagem")
-	fmt.Println("     /sources    Lista documentos indexados")
-	fmt.Println("     /stats      Mostra estatísticas da base")
-	fmt.Println("     /clear      Limpa o histórico da conversa")
-	fmt.Println("     /quit       Sai do chat")
-	fmt.Println("     /exit       Sai do chat")
+	fmt.Printf("     %s/help%s       Mostra esta mensagem\n", colorCyan, colorReset)
+	fmt.Printf("     %s/sources%s    Lista documentos indexados\n", colorCyan, colorReset)
+	fmt.Printf("     %s/stats%s      Mostra estatísticas da base\n", colorCyan, colorReset)
+	fmt.Printf("     %s/clear%s      Limpa o histórico da conversa\n", colorCyan, colorReset)
+	fmt.Printf("     %s/quit%s       Sai do chat\n", colorCyan, colorReset)
+	fmt.Printf("     %s/exit%s       Sai do chat\n", colorCyan, colorReset)
 	fmt.Println()
 }
 
@@ -283,13 +297,13 @@ func printSources(ctx context.Context, store storage.Storage) {
 
 	fmt.Println()
 	if len(docs) == 0 {
-		fmt.Println("  📂 Nenhum documento indexado.")
-		fmt.Println("     Use 'make upload FILE=doc.pdf' para enviar documentos.")
+		fmt.Printf("  %s📂 Nenhum documento indexado.%s\n", colorYellow, colorReset)
+		fmt.Printf("     Use '%smake upload FILE=doc.pdf%s' para enviar documentos.\n", colorCyan, colorReset)
 	} else {
-		fmt.Printf("  📂 Documentos indexados (%d):\n", len(docs))
+		fmt.Printf("  %s📂 Documentos indexados (%d):%s\n", colorBold, len(docs), colorReset)
 		fmt.Println()
 		for _, d := range docs {
-			fmt.Printf("     • %-30s  [%s]  %d chunks\n", d.Name, d.FileType, d.ChunkCount)
+			fmt.Printf("     • %s%-30s%s  %s[%s]%s  %s%d chunks%s\n", colorBold, d.Name, colorReset, colorCyan, d.FileType, colorReset, colorGray, d.ChunkCount, colorReset)
 		}
 	}
 	fmt.Println()

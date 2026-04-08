@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"io"
 	"log/slog"
 	"os"
 )
@@ -10,33 +11,28 @@ import (
 // O campo "component" é automaticamente adicionado a todos os logs,
 // permitindo filtrar por origem (ex: "server", "chat", "rag", "storage").
 //
-// ADR-002: Usa slog.JSONHandler direcionado para os.Stdout.
-// Os logs de nível WARN e ERROR devem ser tratados pelo caller usando
-// as funções log.Warn() e log.Error() que, combinadas com o handler,
-// permitem redirecionamento via infraestrutura (Docker, systemd, etc.).
-//
-// Em containers Docker, tanto STDOUT quanto STDERR são capturados por
-// `docker logs`, então usamos STDOUT como destino único para simplificar
-// e evitar interleaving de streams.
+// ADR-002: Usa slog.NewJSONHandler direcionado para os.Stdout por padrão.
 func New(component string) *slog.Logger {
-	handler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-		// Nível mínimo de log. Em produção poderia ser INFO,
-		// mas para uma PoC educativa mantemos DEBUG para ver tudo.
-		Level: slog.LevelDebug,
+	return NewCustom(component, os.Stdout, slog.LevelDebug)
+}
+
+// NewCustom permite criar um logger com saída e nível específicos.
+func NewCustom(component string, out io.Writer, level slog.Level) *slog.Logger {
+	handler := slog.NewJSONHandler(out, &slog.HandlerOptions{
+		Level: level,
 	})
 
-	// slog.With() retorna um logger com campos pré-definidos.
-	// "component" aparece em TODOS os logs deste logger, facilitando
-	// filtrar por origem: jq 'select(.component == "server")'
 	return slog.New(handler).With("component", component)
 }
 
-// NewDefault configura o logger global do slog para JSON.
+// SetDefault configura o logger global do slog para JSON.
 // Deve ser chamado uma vez no início do programa (main).
-//
-// Após chamar SetDefault, qualquer uso de slog.Info(), slog.Error(), etc.
-// em qualquer parte do código usará o formato JSON automaticamente.
 func SetDefault(component string) {
-	logger := New(component)
-	slog.SetDefault(logger)
+	slog.SetDefault(New(component))
 }
+
+// SetDefaultCustom configura o logger global com saída e nível específicos.
+func SetDefaultCustom(component string, out io.Writer, level slog.Level) {
+	slog.SetDefault(NewCustom(component, out, level))
+}
+
