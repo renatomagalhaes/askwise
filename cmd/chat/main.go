@@ -108,15 +108,49 @@ func initComponents(cfg *config.Config) (*rag.RAG, storage.Storage) {
 	return ragOrch, store
 }
 
-// printBanner exibe o cabeçalho do chat.
+// printBanner exibe o cabeçalho do chat de forma alinhada e colorida.
 func printBanner() {
+	bannerWidth := 46
 	fmt.Println()
-	fmt.Printf("  %s╔══════════════════════════════════════════════╗%s\n", colorYellow, colorReset)
-	fmt.Printf("  %s║%s          %sAskWise Chat v%s%-11s%s  %s║%s\n", colorYellow, colorReset, colorBold, version, "", colorReset, colorYellow, colorReset)
-	fmt.Printf("  %s╠══════════════════════════════════════════════╣%s\n", colorYellow, colorReset)
-	fmt.Printf("  %s║%s  Pergunte sobre os documentos da sua base.  %s║%s\n", colorYellow, colorReset, colorYellow, colorReset)
-	fmt.Printf("  %s║%s  Digite %s/help%s para ver os comandos.         %s║%s\n", colorYellow, colorReset, colorCyan, colorReset, colorYellow, colorReset)
-	fmt.Printf("  %s╚══════════════════════════════════════════════╝%s\n", colorYellow, colorReset)
+	// Topo
+	fmt.Printf("  %s╔%s╗%s\n", colorYellow, strings.Repeat("═", bannerWidth), colorReset)
+
+	// Título: AskWise Chat vX.X.X
+	title := fmt.Sprintf("AskWise Chat v%s", version)
+	// Vamos centralizar de forma simples ou manter fixo.
+	// ║          AskWise Chat v0.1.0                 ║
+	fmt.Printf("  %s║%s%s%s%s%s%s║%s\n",
+		colorYellow,
+		strings.Repeat(" ", 10), // 10 espaços iniciais
+		colorBold, title, colorReset,
+		strings.Repeat(" ", bannerWidth-10-len(title)), // Resto do preenchimento
+		colorYellow, colorReset)
+
+	// Divisor
+	fmt.Printf("  %s╠%s╣%s\n", colorYellow, strings.Repeat("═", bannerWidth), colorReset)
+
+	// Linha 1: Pergunte sobre...
+	line1 := "Pergunte sobre os documentos da sua base."
+	fmt.Printf("  %s║%s  %-*s  %s║%s\n",
+		colorYellow, colorReset, bannerWidth-4, line1, colorYellow, colorReset)
+
+	// Linha 2: Digite /help...
+	line2Part1 := "Digite "
+	line2Part2 := "/help"
+	line2Part3 := " para ver os comandos."
+	// Calculamos o espaço puro: "Digite " (7) + "/help" (5) + " para ver os comandos." (22) + 2 spaces = 36
+	// Total visible: len(line2Part1) + len(line2Part2) + len(line2Part3) + 4 (spaces) = 7 + 5 + 23 + 4 = 39
+	// Precisamos de bannerWidth = 46.
+	line2VisibleLen := len(line2Part1) + len(line2Part2) + len(line2Part3) + 4
+	line2Padding := strings.Repeat(" ", bannerWidth-line2VisibleLen)
+
+	fmt.Printf("  %s║%s  %s%s%s%s%s  %s%s║%s\n",
+		colorYellow, colorReset,
+		line2Part1, colorCyan, line2Part2, colorReset, line2Part3,
+		line2Padding, colorYellow, colorReset)
+
+	// Base
+	fmt.Printf("  %s╚%s╝%s\n", colorYellow, strings.Repeat("═", bannerWidth), colorReset)
 	fmt.Println()
 }
 

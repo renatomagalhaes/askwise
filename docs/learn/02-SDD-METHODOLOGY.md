@@ -234,7 +234,7 @@ Ao finalizar, a spec serve como **checklist de validação**:
 2. **Inclua os arquivos**: Dê à IA acesso aos documentos da spec como contexto
 3. **Valide o output**: Compare o código gerado com o que a spec pede
 4. **Itere na spec, não no código**: Se o resultado não ficou bom, melhore a spec primeiro
-5. **Use AGENTS.md**: Centralize instruções para a IA sobre como usar a spec
+5. **Use docs/project/AGENTS.md**: Centralize instruções para a IA
 
 ### Regra de Ouro
 
@@ -278,7 +278,7 @@ resposta, etc.
 - [ ] Regras de negócio são claras e sem ambiguidade?
 - [ ] Arquitetura e interfaces estão definidas?
 - [ ] Modelo de dados e API estão documentados?
-- [ ] AGENTS.md está configurado para orientar a IA?
+- [ ] docs/project/AGENTS.md está configurado para orientar a IA?
 
 ### Durante o Desenvolvimento
 - [ ] Cada componente referencia itens da spec nos comentários?

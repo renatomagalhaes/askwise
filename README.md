@@ -67,14 +67,15 @@ relevantes e usa uma IA para gerar uma resposta precisa, sempre citando as fonte
 ```
 askwise/
 ├── README.md                    # Este arquivo
-├── AGENTS.md                    # Instruções para agentes de IA
-├── PLAN.md                      # Plano de implementação com etapas
 ├── Dockerfile                   # Multi-stage: builder, runtime, dev
 ├── docker-compose.yml           # app + chat + qdrant
 ├── Makefile                     # Todos os comandos (make help)
 ├── api/
 │   └── openapi.yaml             # Especificação OpenAPI/Swagger
 ├── docs/
+│   ├── project/                 # Gestão do projeto e agentes
+│   │   ├── AGENTS.md            # Instruções para agentes de IA
+│   │   └── PLAN.md              # Plano de implementação com etapas
 │   ├── spec/                    # SPEC: Especificações do projeto
 │   │   ├── 01-VISAO-GERAL.md
 │   │   ├── 02-CENARIO-NEGOCIO.md
